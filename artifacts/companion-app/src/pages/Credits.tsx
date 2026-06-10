@@ -1,0 +1,156 @@
+import { useGetMe, getGetMeQueryKey, useGetLedger, getGetLedgerQueryKey, usePurchaseCredits } from "@workspace/api-client-react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { motion } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Coins, Sparkles, Receipt } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import type { CreditPurchaseInputPackageId } from "@workspace/api-client-react/generated/api.schemas";
+
+const PACKAGES: { id: CreditPurchaseInputPackageId; name: string; credits: number; price: string; popular?: boolean }[] = [
+  { id: "starter", name: "Starter", credits: 50, price: "$0.99" },
+  { id: "popular", name: "Popular", credits: 200, price: "$3.49", popular: true },
+  { id: "premium", name: "Premium", credits: 500, price: "$7.99" },
+];
+
+export default function Credits() {
+  const { data: user, isLoading: userLoading } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
+  const { data: ledger, isLoading: ledgerLoading } = useGetLedger({ query: { queryKey: getGetLedgerQueryKey() } });
+  
+  const purchaseCredits = usePurchaseCredits();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handlePurchase = (packageId: CreditPurchaseInputPackageId) => {
+    purchaseCredits.mutate({ data: { packageId } }, {
+      onSuccess: () => {
+        toast({
+          title: "Purchase successful",
+          description: "Your credits have been added to your balance.",
+        });
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetLedgerQueryKey() });
+      },
+      onError: () => {
+        toast({
+          variant: "destructive",
+          title: "Purchase failed",
+          description: "Something went wrong. Please try again.",
+        });
+      }
+    });
+  };
+
+  return (
+    <AppLayout>
+      <div className="p-4 pt-8 space-y-8">
+        <header className="space-y-2 text-center">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-16 h-16 bg-primary/20 rounded-full mx-auto flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(255,105,180,0.3)]"
+          >
+            <Coins className="w-8 h-8 text-primary" />
+          </motion.div>
+          <motion.h1 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-4xl font-serif text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"
+          >
+            {userLoading ? <Skeleton className="h-10 w-24 mx-auto" /> : user?.credits}
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-muted-foreground text-sm uppercase tracking-widest"
+          >
+            Available Credits
+          </motion.p>
+        </header>
+
+        <section className="space-y-4">
+          <h2 className="text-xl font-serif">Get More Credits</h2>
+          <div className="grid gap-4">
+            {PACKAGES.map((pkg, i) => (
+              <motion.div
+                key={pkg.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 + i * 0.1 }}
+              >
+                <Card className={`relative overflow-hidden ${pkg.popular ? 'border-primary/50 bg-primary/5' : 'border-white/5 bg-card/50'}`}>
+                  {pkg.popular && (
+                    <div className="absolute -right-12 top-4 rotate-45 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider py-1 w-40 text-center shadow-lg">
+                      Most Popular
+                    </div>
+                  )}
+                  <CardContent className="p-5 flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-serif font-medium text-lg">{pkg.name}</h3>
+                        {pkg.popular && <Sparkles className="w-4 h-4 text-accent" />}
+                      </div>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Coins className="w-3.5 h-3.5" />
+                        {pkg.credits} credits
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => handlePurchase(pkg.id)}
+                      disabled={purchaseCredits.isPending}
+                      className={`min-w-24 ${pkg.popular ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-white/10 text-foreground hover:bg-white/20'}`}
+                    >
+                      {pkg.price}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4 pb-8">
+          <h2 className="text-xl font-serif flex items-center gap-2">
+            <Receipt className="w-5 h-5 text-muted-foreground" />
+            Ledger
+          </h2>
+          <div className="space-y-3">
+            {ledgerLoading ? (
+              Array(3).fill(0).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-xl bg-card/50" />
+              ))
+            ) : ledger?.length === 0 ? (
+              <div className="text-center p-6 bg-card/30 rounded-2xl border border-white/5">
+                <p className="text-muted-foreground text-sm">No transaction history.</p>
+              </div>
+            ) : (
+              ledger?.map((entry, i) => (
+                <motion.div
+                  key={entry.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + i * 0.05 }}
+                  className="flex items-center justify-between p-3 rounded-xl bg-card/30 border border-white/5"
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className="text-sm font-medium">{entry.description}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                      {format(new Date(entry.createdAt), "MMM d, h:mm a")}
+                    </span>
+                  </div>
+                  <div className={`font-mono text-sm font-bold ${entry.amount > 0 ? 'text-green-400' : 'text-foreground'}`}>
+                    {entry.amount > 0 ? '+' : ''}{entry.amount}
+                  </div>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+    </AppLayout>
+  );
+}

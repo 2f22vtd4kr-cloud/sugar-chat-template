@@ -1,22 +1,32 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI Companion Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User management
+  - name: companions
+    description: Companion management
+  - name: conversations
+    description: Conversation management
+  - name: messages
+    description: Message management
+  - name: ledger
+    description: Credit ledger
+  - name: dashboard
+    description: Dashboard summary data
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +34,235 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current user (creates if not exists)
+      parameters:
+        - name: x-telegram-init-data
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /users/me/stats:
+    get:
+      operationId: getMyStats
+      tags: [users]
+      summary: Get user stats (credit usage, message counts, affinity totals)
+      parameters:
+        - name: x-telegram-init-data
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStats"
+        "401":
+          description: Unauthorized
+
+  /companions:
+    get:
+      operationId: listCompanions
+      tags: [companions]
+      summary: List all available companions
+      responses:
+        "200":
+          description: List of companions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Companion"
+
+  /companions/{id}:
+    get:
+      operationId: getCompanion
+      tags: [companions]
+      summary: Get a specific companion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Companion details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Companion"
+        "404":
+          description: Not found
+
+  /conversations:
+    get:
+      operationId: listConversations
+      tags: [conversations]
+      summary: Get current user's conversations
+      parameters:
+        - name: x-telegram-init-data
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of conversations with companion info
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConversationWithCompanion"
+        "401":
+          description: Unauthorized
+
+  /conversations/{companionId}:
+    get:
+      operationId: getConversation
+      tags: [conversations]
+      summary: Get or create a conversation with a companion
+      parameters:
+        - name: x-telegram-init-data
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: companionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationWithMessages"
+        "401":
+          description: Unauthorized
+
+  /conversations/{companionId}/messages:
+    get:
+      operationId: listMessages
+      tags: [messages]
+      summary: Get messages for a conversation
+      parameters:
+        - name: x-telegram-init-data
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: companionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+        "401":
+          description: Unauthorized
+
+  /ledger:
+    get:
+      operationId: getLedger
+      tags: [ledger]
+      summary: Get current user's ledger entries
+      parameters:
+        - name: x-telegram-init-data
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ledger entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LedgerEntry"
+        "401":
+          description: Unauthorized
+
+  /credits/purchase:
+    post:
+      operationId: purchaseCredits
+      tags: [ledger]
+      summary: Purchase credits (mock checkout)
+      parameters:
+        - name: x-telegram-init-data
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreditPurchaseInput"
+      responses:
+        "200":
+          description: Updated user with new credit balance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary (active companions, total messages, affinity, recent activity)
+      parameters:
+        - name: x-telegram-init-data
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          description: Unauthorized
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +273,168 @@ components:
       required:
         - status
 
+    User:
+      type: object
+      required: [id, telegramId, credits, freeImagesSent, createdAt]
+      properties:
+        id:
+          type: string
+        telegramId:
+          type: string
+        username:
+          type: ["string", "null"]
+        credits:
+          type: integer
+        freeImagesSent:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    UserStats:
+      type: object
+      required: [totalMessages, totalImages, totalCreditsSpent, topCompanion, affinityTotal]
+      properties:
+        totalMessages:
+          type: integer
+        totalImages:
+          type: integer
+        totalCreditsSpent:
+          type: integer
+        topCompanion:
+          type: ["string", "null"]
+        affinityTotal:
+          type: integer
+
+    Companion:
+      type: object
+      required: [id, name, avatarUrl, personality, greetingText, creditCostText, creditCostImg]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: string
+        personality:
+          type: string
+        greetingText:
+          type: string
+        creditCostText:
+          type: integer
+        creditCostImg:
+          type: integer
+
+    ConversationWithCompanion:
+      type: object
+      required: [id, companionId, affinity, updatedAt, companion]
+      properties:
+        id:
+          type: string
+        companionId:
+          type: string
+        affinity:
+          type: integer
+        updatedAt:
+          type: string
+          format: date-time
+        lastMessage:
+          type: ["string", "null"]
+        companion:
+          $ref: "#/components/schemas/Companion"
+
+    ConversationWithMessages:
+      type: object
+      required: [id, companionId, affinity, companion, messages]
+      properties:
+        id:
+          type: string
+        companionId:
+          type: string
+        affinity:
+          type: integer
+        companion:
+          $ref: "#/components/schemas/Companion"
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+
+    Message:
+      type: object
+      required: [id, conversationId, sender, type, content, createdAt]
+      properties:
+        id:
+          type: string
+        conversationId:
+          type: string
+        sender:
+          type: string
+        type:
+          type: string
+        content:
+          type: string
+        mediaUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    LedgerEntry:
+      type: object
+      required: [id, amount, type, description, createdAt]
+      properties:
+        id:
+          type: string
+        amount:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        referenceId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    CreditPurchaseInput:
+      type: object
+      required: [packageId]
+      properties:
+        packageId:
+          type: string
+          enum: [starter, popular, premium]
+
+    DashboardSummary:
+      type: object
+      required: [credits, totalMessages, activeConversations, totalAffinity, recentActivity]
+      properties:
+        credits:
+          type: integer
+        totalMessages:
+          type: integer
+        activeConversations:
+          type: integer
+        totalAffinity:
+          type: integer
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+
+    ActivityItem:
+      type: object
+      required: [companionName, companionAvatar, lastMessage, updatedAt, affinity]
+      properties:
+        companionName:
+          type: string
+        companionAvatar:
+          type: string
+        lastMessage:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+          format: date-time
+        affinity:
+          type: integer

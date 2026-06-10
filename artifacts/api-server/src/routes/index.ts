@@ -1,8 +1,21 @@
-import { Router, type IRouter } from "express";
-import healthRouter from "./health";
+import { Router } from "express";
+import healthRouter from "./health.js";
+import usersRouter from "./users.js";
+import companionsRouter from "./companions.js";
+import conversationsRouter from "./conversations.js";
+import messagesRouter from "./messages.js";
+import ledgerRouter from "./ledger.js";
+import dashboardRouter from "./dashboard.js";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.use(healthRouter);
+router.use("/users", usersRouter);
+router.use("/companions", companionsRouter);
+router.use("/conversations", conversationsRouter);
+router.use("/conversations", messagesRouter);
+router.use("/ledger", ledgerRouter);
+router.use("/credits", ledgerRouter);
+router.use("/dashboard", dashboardRouter);
 
 export default router;

@@ -1,4 +1,4 @@
-import { Telegraf, Scenes, session, Markup } from "telegraf";
+import { Telegraf, Markup } from "telegraf";
 import { config } from "../lib/config.js";
 import { db, usersTable, companionsTable, conversationsTable, messagesTable, ledgerEntriesTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
@@ -8,6 +8,13 @@ import { imageQueue } from "../queues/image-queue.js";
 import { sql } from "drizzle-orm";
 
 export const bot = new Telegraf(config.telegramBotToken);
+
+// Telegram Stars credit packages
+export const STARS_PACKAGES: Record<string, { credits: number; stars: number; label: string; description: string }> = {
+  starter: { credits: 50, stars: 50, label: "Starter Pack", description: "50 credits to chat and generate images" },
+  popular: { credits: 200, stars: 175, label: "Popular Pack", description: "200 credits — save 12% vs Starter" },
+  premium: { credits: 500, stars: 399, label: "Premium Pack", description: "500 credits — save 20% vs Starter" },
+};
 
 // Active companion sessions: chatId -> { companionId, conversationId }
 const activeSessions = new Map<number, { companionId: string; conversationId: string; companionName: string }>();
@@ -52,7 +59,7 @@ bot.start(async (ctx) => {
     `Welcome back${user.username ? `, @${user.username}` : ""}!\n\nYou have ${user.credits} credits.\n\nChoose a companion to chat with:`,
     Markup.inlineKeyboard([
       ...companionButtons,
-      [Markup.button.callback("Credit Vault", "credits")],
+      [Markup.button.callback("⭐ Buy Credits with Stars", "buy_menu")],
       [Markup.button.url("Open Web App", `https://t.me/${config.telegramBotUsername}/app`)],
     ])
   );
@@ -67,6 +74,119 @@ bot.command("cancel", async (ctx) => {
   } else {
     await ctx.reply("No active session. Use /start to choose a companion.");
   }
+});
+
+// /buy command — shows Stars credit packages
+bot.command("buy", async (ctx) => {
+  await ctx.reply(
+    "⭐ Buy Credits with Telegram Stars\n\nPick a credit pack:",
+    Markup.inlineKeyboard([
+      [Markup.button.callback("Starter — 50 credits (50 ⭐)", "stars_buy:starter")],
+      [Markup.button.callback("Popular — 200 credits (175 ⭐) 🔥", "stars_buy:popular")],
+      [Markup.button.callback("Premium — 500 credits (399 ⭐)", "stars_buy:premium")],
+    ])
+  );
+});
+
+// Stars package selection → send invoice
+bot.action(/^stars_buy:(.+)$/, async (ctx) => {
+  const packageId = ctx.match[1] as keyof typeof STARS_PACKAGES;
+  const pkg = STARS_PACKAGES[packageId];
+
+  if (!pkg) {
+    await ctx.answerCbQuery("Invalid package.");
+    return;
+  }
+
+  await ctx.answerCbQuery();
+
+  try {
+    await ctx.replyWithInvoice({
+      title: pkg.label,
+      description: pkg.description,
+      payload: packageId,
+      currency: "XTR",
+      prices: [{ label: pkg.label, amount: pkg.stars }],
+      provider_token: "",
+    });
+  } catch (err) {
+    console.error("[Bot] Failed to send invoice:", err);
+    await ctx.reply("Could not create invoice. Please try again.");
+  }
+});
+
+// Buy menu action from /start button
+bot.action("buy_menu", async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.reply(
+    "⭐ Buy Credits with Telegram Stars\n\nPick a credit pack:",
+    Markup.inlineKeyboard([
+      [Markup.button.callback("Starter — 50 credits (50 ⭐)", "stars_buy:starter")],
+      [Markup.button.callback("Popular — 200 credits (175 ⭐) 🔥", "stars_buy:popular")],
+      [Markup.button.callback("Premium — 500 credits (399 ⭐)", "stars_buy:premium")],
+    ])
+  );
+});
+
+// Pre-checkout: always approve Stars payments (currency XTR has no shipping)
+bot.on("pre_checkout_query", async (ctx) => {
+  const query = ctx.preCheckoutQuery;
+  if (query.currency !== "XTR") {
+    await ctx.answerPreCheckoutQuery(false, "Only Telegram Stars payments are supported.");
+    return;
+  }
+  await ctx.answerPreCheckoutQuery(true);
+});
+
+// Successful payment → credit user
+bot.on("message", async (ctx, next) => {
+  const msg = ctx.message as any;
+
+  if (msg.successful_payment) {
+    const payment = msg.successful_payment;
+    if (payment.currency !== "XTR") return next();
+
+    const packageId = payment.invoice_payload as string;
+    const pkg = STARS_PACKAGES[packageId];
+
+    if (!pkg) {
+      await ctx.reply("Payment received but package not found. Please contact support.");
+      return;
+    }
+
+    const { id: telegramId, username } = ctx.from!;
+    const user = await upsertUser(telegramId, username);
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(usersTable)
+        .set({ credits: sql`${usersTable.credits} + ${pkg.credits}` })
+        .where(eq(usersTable.id, user.id));
+
+      await tx.insert(ledgerEntriesTable).values({
+        id: randomUUID(),
+        userId: user.id,
+        amount: pkg.credits,
+        type: "DEPOSIT",
+        referenceId: payment.telegram_payment_charge_id ?? randomUUID(),
+        description: `${pkg.label} — ${pkg.credits} credits (${pkg.stars} ⭐ Stars)`,
+      });
+    });
+
+    const updatedUser = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, user.id))
+      .limit(1)
+      .then((r) => r[0]!);
+
+    await ctx.reply(
+      `✅ Payment confirmed!\n\n+${pkg.credits} credits added.\nNew balance: ${updatedUser.credits} credits\n\nEnjoy chatting with your companions! Use /start to continue.`
+    );
+    return;
+  }
+
+  return next();
 });
 
 // Companion selection
@@ -88,7 +208,6 @@ bot.action(/^companion:(.+)$/, async (ctx) => {
     return;
   }
 
-  // Get or create conversation
   let conversation = await db
     .select()
     .from(conversationsTable)
@@ -104,7 +223,6 @@ bot.action(/^companion:(.+)$/, async (ctx) => {
       companionId,
       affinity: 0,
     });
-    // Insert greeting
     await db.insert(messagesTable).values({
       id: randomUUID(),
       conversationId: convId,
@@ -134,8 +252,9 @@ bot.action("credits", async (ctx) => {
   const user = await upsertUser(telegramId, username);
   await ctx.answerCbQuery();
   await ctx.reply(
-    `Credit Vault\n\nCurrent balance: ${user.credits} credits\n\nCredit packs:\n• Starter: 50 credits — $0.99\n• Popular: 200 credits — $3.49\n• Premium: 500 credits — $7.99\n\nPurchase credits in the Web App.`,
+    `Credit Vault\n\nCurrent balance: ${user.credits} credits`,
     Markup.inlineKeyboard([
+      [Markup.button.callback("⭐ Buy with Stars", "buy_menu")],
       [Markup.button.url("Open Credit Store", `https://t.me/${config.telegramBotUsername}/app`)],
     ])
   );
@@ -154,16 +273,17 @@ bot.command("image", async (ctx) => {
   const { id: telegramId, username } = ctx.from;
   const user = await upsertUser(telegramId, username);
 
-  // Check free image or credits
   const hasFreeImage = user.freeImagesSent < 1;
   if (!hasFreeImage && user.credits < 3) {
-    await ctx.reply(`Not enough credits. You need 3 credits for an image. You have ${user.credits}.\n\nGet more credits in the Web App.`);
+    await ctx.reply(
+      `Not enough credits. You need 3 credits for an image. You have ${user.credits}.`,
+      Markup.inlineKeyboard([[Markup.button.callback("⭐ Buy Credits", "buy_menu")]])
+    );
     return;
   }
 
   const prompt = ctx.message.text.replace("/image", "").trim() || "a beautiful portrait";
 
-  // Deduct credits before enqueue
   await db.transaction(async (tx) => {
     if (hasFreeImage) {
       await tx.update(usersTable).set({ freeImagesSent: sql`${usersTable.freeImagesSent} + 1` }).where(eq(usersTable.id, user.id));
@@ -194,7 +314,6 @@ bot.command("image", async (ctx) => {
     botToken: config.telegramBotToken,
   });
 
-  // Save user's image request message
   await db.insert(messagesTable).values({
     id: randomUUID(),
     conversationId: session.conversationId,
@@ -219,15 +338,14 @@ bot.on("text", async (ctx) => {
 
   if (user.credits < 1) {
     await ctx.reply(
-      `Out of credits. Get more in the Web App.`,
-      Markup.inlineKeyboard([[Markup.button.url("Get Credits", `https://t.me/${config.telegramBotUsername}/app`)]])
+      `Out of credits!`,
+      Markup.inlineKeyboard([[Markup.button.callback("⭐ Buy Credits with Stars", "buy_menu")]])
     );
     return;
   }
 
   const userText = ctx.message.text;
 
-  // Deduct 1 credit + create ledger entry atomically
   await db.transaction(async (tx) => {
     await tx.update(usersTable).set({ credits: sql`${usersTable.credits} - 1` }).where(eq(usersTable.id, user.id));
     await tx.insert(ledgerEntriesTable).values({
@@ -240,7 +358,6 @@ bot.on("text", async (ctx) => {
     });
   });
 
-  // Save user message
   const userMsgId = randomUUID();
   await db.insert(messagesTable).values({
     id: userMsgId,
@@ -250,7 +367,6 @@ bot.on("text", async (ctx) => {
     content: userText,
   });
 
-  // Load recent messages for context (last 10)
   const recentMessages = await db
     .select()
     .from(messagesTable)
@@ -275,7 +391,6 @@ bot.on("text", async (ctx) => {
 
   contextMessages.push({ role: "user", content: userText });
 
-  // Enqueue AI processing
   await textQueue.add("process-text", {
     conversationId: activeSession.conversationId,
     userId: user.id,
@@ -287,7 +402,6 @@ bot.on("text", async (ctx) => {
     botToken: config.telegramBotToken,
   });
 
-  // Show typing indicator
   await ctx.sendChatAction("typing");
 });
 

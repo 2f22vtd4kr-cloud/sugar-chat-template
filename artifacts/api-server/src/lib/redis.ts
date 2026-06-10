@@ -1,31 +1,27 @@
 import { Redis } from "ioredis";
 import { config } from "./config.js";
 
-function parseRedisUrl(url: string): { host: string; port: number; password?: string; tls: boolean } {
-  const parsed = new URL(url);
-  const tls = parsed.protocol === "rediss:";
-  const host = parsed.hostname;
-  const port = parseInt(parsed.port || (tls ? "6380" : "6379"), 10);
-  const password = parsed.password || undefined;
-  return { host, port, password, tls };
-}
-
-// Separate connection for BullMQ (cannot be reused across queue/worker contexts)
+/**
+ * Pass the full rediss:// URL directly to ioredis.
+ * ioredis natively parses rediss:// and enables TLS automatically —
+ * no manual host/port/tls parsing needed.
+ */
 export const createRedisConnection = (): Redis => {
-  const { host, port, password, tls } = parseRedisUrl(config.redisUrl);
-  const redis = new Redis({
-    host,
-    port,
-    password,
-    tls: tls ? {} : undefined,
-    maxRetriesPerRequest: null, // required by BullMQ
+  const redis = new Redis(config.redisUrl, {
+    maxRetriesPerRequest: null, // required by BullMQ workers
     enableReadyCheck: false,
+    retryStrategy: (times) => {
+      if (times > 5) return null; // stop retrying after 5 attempts
+      return Math.min(times * 500, 3000);
+    },
   });
-  redis.on("error", (err) => {
-    console.error("[Redis] Connection error:", err.message);
-  });
+
+  redis.on("connect", () => console.log("[Redis] Connected"));
+  redis.on("ready", () => console.log("[Redis] Ready"));
+  redis.on("error", (err) => console.error("[Redis] Error:", err.message));
+
   return redis;
 };
 
-// Shared general-purpose Redis client
+// Shared general-purpose client (not for BullMQ — BullMQ needs its own connections)
 export const redis = createRedisConnection();

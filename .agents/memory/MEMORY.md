@@ -1,0 +1,2 @@
+- [Redis TLS fix](redis-tls.md) — pass rediss:// URL string directly to ioredis; never manually parse. ECONNRESET = TLS mismatch.
+- [Telegram Stars payments](telegram-stars.md) — currency "XTR", provider_token "", handled in bot's successful_payment handler; createInvoiceLink for Mini App openInvoice.

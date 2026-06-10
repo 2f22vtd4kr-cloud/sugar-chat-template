@@ -1,0 +1,181 @@
+The environment setup looks complete, but if you pass that prompt directly to the Replit Agent, it will likely hit a few common Replit deployment friction points.
+To prevent the Agent from getting stuck in configuration loops, crashing the workspace sandbox, or timing out during package installation, include this final **"Replit Infrastructure Optimization" Bundle** right at the top of your prompt.
+### 💡 Why These Additions Prevent Replit Deployment Crashes:
+ 1. **Dynamic Host Binding:** Replit workspaces do not expose fixed ports or hardcoded web domains. The frontend Vite server and backend Express API need to explicitly reference 0.0.0.0 and fallback to process.env.PORT dynamically, or the Agent's preview pane will throw a 502 Bad Gateway error.
+ 2. **Database Migration Pipeline:** Replit PostgreSQL requires structural setups to properly run Prisma initialization inside the sandbox. Explicit directives force the Agent to sequence prisma generate and prisma db push cleanly within the workspace lifecycle scripts.
+ 3. **Optimistic Redis Key Limits:** Replit's infrastructure uses automated background sweeping. Adding explicit time-to-live (EXPIRE) tracking parameters to lock mechanisms keeps your memory footprint extremely lean and optimized for the sandbox environment.
+Here is the finalized, completely production-hardened master block. It includes the structural corrections, the dynamic layout, the Pollinations image workaround, and the infrastructure rules seamlessly in one single text file:
+```markdown
+# AI Companion Platform — Complete Build Prompt for Replit Agent
+
+> Read this entire document before creating a single file. Build every phase in sequence. No placeholder comments, no empty function bodies, no `TODO` markers. Every function must be fully implemented. When in doubt, implement the safer, more defensive version.
+
+---
+
+## REPLIT ENVIRONMENT INSTRUCTIONS & STARTUP SAFETY GUARDS
+
+Before building files, read the workspace configurations. The server must explicitly throw a fatal exception and refuse to boot if any required environment variable is missing or malformed on startup. Add all of these to Replit Secrets before running:
+
+```env
+# Telegram Configuration
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_BOT_USERNAME=
+
+# Database Configuration (Replit PostgreSQL Instance)
+DATABASE_URL=
+
+# Redis Layer (Required for BullMQ Job Queues and Concurrency Locking)
+REDIS_URL=
+
+# AI Completion Gateway — OpenRouter Free Tier Router
+OPENROUTER_API_KEY=
+OPENROUTER_BASE_URL=[https://openrouter.ai/api/v1](https://openrouter.ai/api/v1)
+OPENROUTER_MODEL=openrouter/free
+
+# Image Generation Layer — Free Tier Zero Friction Bypass
+# Note: Value must be set to "POLLINATIONS" to indicate dynamic unauthenticated image paths.
+IMAGE_GEN_API_KEY=POLLINATIONS
+
+# Dashboard Security Access
+ADMIN_PASS=
+
+```
+## REPLIT INFRASTRUCTURE DEPLOYMENT PARAMETERS
+ 1. **Host & Port Assignment**: The Express backend service MUST explicitly listen on host 0.0.0.0 using process.env.PORT || 3000. Do not hardcode a local IP fallback string, as Replit's web proxy layer will reject the connection pool.
+ 2. **Prisma Initial Hook Synchronization**: Configure the package.json compilation workflow scripts to execute prisma generate && prisma db push before triggering node startup commands. This guarantees database tables and schemas match current parameters instantly on sandbox container assembly.
+ 3. **Defensive Redis Key Evictions**: Ensure any distributed concurrency locks generated via ioredis during session swaps utilize tight time-to-live (TTL) expiration constraints (maximum 60 seconds) to prevent memory allocation overages inside the Replit container.
+## TECH STACK & SYSTEM ARCHITECTURE BOUNDARIES
+ * **Runtime**: Node.js 20+ with TypeScript (strict: true, noImplicitAny: true, target: ES2022).
+ * **Database**: Prisma ORM with PostgreSQL.
+ * **Asynchronous Task Architecture**: bullmq powered by an isolated ioredis layer.
+ * **AI Integration**: Custom HTTP clients using Axios targeting OpenRouter (Chat Completions API) and Pollinations.ai (Binary stream parser bypass).
+ * **Bot Layer**: telegraf framework using persistent modular scene steps.
+ * **Frontend App**: Vite + React + TypeScript + TailwindCSS.
+ * **Mini App Communication Handler**: Core script framework utilizing the official @telegram-apps/sdk / window.Telegram.WebApp SDK context.
+## CRITICAL REPAIRS & TECHNICAL DEBT MITIGATION
+Your implementation MUST explicitly execute these runtime security and stability fixes from step one:
+ 1. **Vite Frontend Runtime Environment Variable Resolution**: Browser runtimes compiled via Vite do not have access to node-style process.env. You must change any system URL paths to rely on import.meta.env.VITE_SERVER_URL.
+ 2. **Telegram WebApp Invoice Deep Linking**: Passing a bot deep link format like tg://resolve?domain=bot&start=payload directly inside tg.openInvoice() crashes the Telegram UI shell. For Telegram Stars transactions, you must explicitly pass a clean invoice slug string generated from the backend bot API, or handle the billing trigger via the sendInvoice framework.
+ 3. **Prisma BigInt JSON Serialization Defenses**: telegramId fields are declared as BigInt inside the schema. Express's native res.json() utility will throw a fatal TypeError: Do not know how to serialize a BigInt runtime error when it hits those fields. You must install a global serializer middleware or map objects to convert all BigInt parameters cleanly into primitive strings before passing any payloads downstream.
+ 4. **Prisma Concurrency Isolation Controls**: Wrap all transaction and balance mutations inside an explicit prisma.$transaction() pipeline to prevent double-spending attacks, duplicate conversation creations, or ledger race conditions.
+## CORE DATA STRUCTURES (schema.prisma)
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id               String         @id @default(uuid())
+  telegramId       BigInt         @unique
+  username         String?
+  credits          Int            @default(10)
+  freeImagesSent   Int            @default(0)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  conversations    Conversation[]
+  ledgerEntries    LedgerEntry[]
+}
+
+model Companion {
+  id             String         @id @default(uuid())
+  name           String         @unique
+  avatarUrl      String
+  systemPrompt   String
+  personality    String
+  greetingText   String
+  creditCostText Int            @default(1)
+  creditCostImg  Int            @default(3)
+  conversations  Conversation[]
+}
+
+model Conversation {
+  id          String    @id @default(uuid())
+  userId      String
+  companionId String
+  affinity    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companion   Companion @relation(fields: [companionId], references: [id], onDelete: Cascade)
+  messages    Message[]
+
+  @@unique([userId, companionId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  sender         String       // "user" | "companion"
+  type           String       // "text" | "image"
+  content        String       
+  mediaUrl       String?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model LedgerEntry {
+  id          String   @id @default(uuid())
+  userId      String
+  amount      Int      
+  type        String   // "DEPOSIT" | "TEXT_COST" | "IMAGE_COST" | "GIFT_COST"
+  referenceId String   @unique // For payment idempotency tracking keys
+  description String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+```
+## MODULAR PHASE DEVELOPMENT PLAN
+### PHASE 1: CORE INFRASTRUCTURE & BOOT SEEDS (src/server/)
+ 1. Create config.ts to implement environment validation. Catch missing parameters immediately.
+ 2. Build prisma.ts exposing a single cached database instance.
+ 3. Establish redis.ts constructing separate ioredis connection clients for BullMQ Queue and Worker contexts to prevent runtime thread blockages.
+ 4. Build automated database seeds for 3 distinct initial companions:
+   * **Sophia (The Tech Innovator)**: Dynamic, witty, tech-focused, casual Italian or English vocabulary.
+   * **Marcus (The Stoic Mentor)**: Grounded, analytical, professional, highly supportive.
+   * **Elena (The Creative Artist)**: Abstract, expressive, visual, highly sensitive to affinity level shifts.
+### PHASE 2: TELEGRAM BOT MODULE & MODULAR SYSTEM SCENES
+ 1. Initialize the bot engine inside src/server/bot/engine.ts. Implement an universal generic /cancel routing hook to break any current state conversation paths cleanly.
+ 2. Implement user onboarding on /start: Check database for telegramId. If absent, execute an atomic upsert allocating 10 starter credits.
+ 3. Render an elegant primary interface showcasing available companions inside an interactive grid of inline buttons: [ 🎭 Choose Companion ], [ 💎 Credit Vault ], and [ 🌐 Open Web-App ].
+ 4. Chat Interface Mechanics: Clicking a companion spawns an active conversation link. Messages caught inside this state are intercepted, validated for credits (1 credit for text), and sent to the worker layer.
+### PHASE 3: BULLMQ ASYNC ENQUEUE ARCHITECTURE (src/server/queues/)
+Do not compute heavy network generation requests inside native bot loops. You must decouple execution handlers entirely:
+ 1. **Text Prompt Processing Queue (textQueue)**:
+   * Enqueue a payload including conversation details and incoming prompt strings.
+   * The corresponding worker triggers an HTTP post to OPENROUTER_BASE_URL.
+   * Inject the full context message array along with the companion's raw systemPrompt. Append instructions directing the model to output fluid text replies under 400 characters.
+   * Dispatch the output string directly back to the user via Telegraf API hooks.
+ 2. **Image Processing Queue (imageQueue)**:
+   * Validate credit depth (3 credits) or check if freeImagesSent < 1. Deduct credits defensively **before** task generation execution begins.
+   * **Pollinations.ai Workaround Routing**: Construct a dynamic string payload targeting https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&nologo=true.
+   * Fetch the raw stream data arraybuffer using Axios, compile it securely into a standard Node Buffer file context, and deliver the media directly using ctx.replyWithPhoto().
+   * On successful transaction verification, modify database metrics and save logs. If the stream or network connection returns an error code, execute an absolute transaction state rollback inside the queue failure handler to automatically refund the user's credits.
+### PHASE 4: THE TELEGRAM MINI APP GATEWAY (src/client/ & src/server/api/)
+ 1. Build out the frontend build routes using standard TypeScript components styled cleanly with dark-mode responsive TailwindCSS patterns.
+ 2. **Dashboard Overview View**: Display user metadata metrics, transaction records, and detailed interactive profile metrics directly reading from the authenticated Prisma context.
+ 3. **Credit Purchases Portal**: Integrate automated mock checkout billing options alongside real payment verification parameters. Track every incoming transaction using unique string reference hashes to keep database records completely error-free.
+ 4. **Mini App Authentication Interceptor**: Protect all endpoints inside /api/user/* with an un-bypassable validation loop. Parse the incoming X-Telegram-Init-Data header against your secure TELEGRAM_BOT_TOKEN to prevent spoofing or unauthorized entry.
+### PHASE 5: TELEMETRY CONTROL DASHBOARD
+ 1. Mount the bull-board interface layout directly onto the Express route tree at /admin/queues.
+ 2. Encapsulate the route handler with custom basic authentication rules. Check incoming parameter details directly against the secure ADMIN_PASS string value. If empty or generic, terminate the connection attempt immediately.
+## ABSOLUTE RULES — NEVER VIOLATE THESE
+ * Never use any types except where a third-party framework explicitly mandates it — document every exception with a thorough code comment.
+ * Never write // TODO, placeholder return null, or empty function wrappers anywhere inside the repository.
+ * Never hardcode environmental secrets or authentication variables directly in source files.
+ * Never run AI completions or image generation calls synchronously inside bot event loops — always offload processing cleanly via async queues.
+ * Never skip signature verification checks on backend Mini App API routes — token authentication is absolutely mandatory.
+ * Never increment the user's freeImagesSent counter before the file is confirmed as successfully delivered by the Telegram API.
+ * Never share a single Redis connection between a Queue and a Worker entity instance — enforce true thread separation.
+```
+
+***
+
+Populate your secrets in Replit, drop this updated master prompt block into the Agent chat window, and get ready for a completely smooth, successful workspace build! 🐸💎🚀
+
+```

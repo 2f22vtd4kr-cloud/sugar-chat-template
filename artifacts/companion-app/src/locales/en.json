@@ -62,6 +62,23 @@
     "cancel": "Cancel",
     "balance_after": "Balance after",
     "not_enough": "Not enough credits",
-    "purchase_failed": "Purchase failed"
+    "purchase_failed": "Purchase failed",
+    "my_items": "My Items",
+    "flash_active": "⚡ Flash Sale active — limited time discounts!",
+    "empty_category": "No items in this category",
+    "cost": "Cost"
+  },
+  "inventory": {
+    "title": "My Inventory",
+    "subtitle": "Items you own — send them as gifts",
+    "owned": "Available",
+    "gifted": "Gifted",
+    "send_gift": "Send as Gift",
+    "choose_companion": "Send to companion",
+    "no_conversations": "Start a conversation first",
+    "cancel": "Cancel",
+    "empty_title": "Your inventory is empty",
+    "empty_desc": "Purchase items from the shop to add them here",
+    "go_shop": "Browse Shop"
   }
 }

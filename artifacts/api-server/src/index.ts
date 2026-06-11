@@ -4,6 +4,7 @@ import { seedCompanions } from "./lib/seed.js";
 import { startBot } from "./bot/engine.js";
 import { textWorker } from "./queues/text-queue.js";
 import { imageWorker } from "./queues/image-queue.js";
+import { whaleRecoveryWorker } from "./queues/whale-recovery-queue.js";
 
 const rawPort = process.env["PORT"];
 
@@ -23,9 +24,10 @@ seedCompanions().catch((err) => {
 });
 
 // Start workers (they self-initialize via import)
-logger.info("Text and image workers initialized");
+logger.info("Text, image and whale-recovery workers initialized");
 void textWorker;
 void imageWorker;
+void whaleRecoveryWorker;
 
 // Start Telegram bot
 startBot();

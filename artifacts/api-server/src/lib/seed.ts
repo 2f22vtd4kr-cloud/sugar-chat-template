@@ -13,6 +13,7 @@ export async function seedCompanions(): Promise<void> {
       creditCostText: companion.creditCostText,
       creditCostImg: companion.creditCostImg,
       tags: companion.tags,
+      preferredTags: companion.preferredTags.join(","),
     };
 
     const existing = await db

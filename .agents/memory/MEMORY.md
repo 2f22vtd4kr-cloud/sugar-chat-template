@@ -1,4 +1,5 @@
 - [Redis TLS fix](redis-tls.md) — pass rediss:// URL string directly to ioredis; never manually parse. ECONNRESET = TLS mismatch.
 - [Telegram Stars payments](telegram-stars.md) — currency "XTR", provider_token "", handled in bot's successful_payment handler; createInvoiceLink for Mini App openInvoice.
-- [Sugar Chat v7 Architecture](sugar-chat-v7.md) — Red Liquid Glass theme, NSFW gate, i18n, Stars subscriptions — key decisions for this project.
+- [Sugar Chat v8 Architecture](sugar-chat-v8.md) — Red Liquid Glass theme, NSFW gate, i18n, Stars subscriptions, dynamic pricing, whale recovery, inventory system — key decisions for this project.
 - [API client type patching](api-client-types.md) — Generated User type in dist/generated/api.schemas.d.ts AND src/generated/api.schemas.ts must both be patched when adding new backend fields; no codegen script exists.
+- [v8 TSC pre-existing errors](tsc-preexisting.md) — TS6305 (api-client-react dist not built) and TS7006 (implicit any in old pages) are pre-existing; ignore them when checking new file correctness.

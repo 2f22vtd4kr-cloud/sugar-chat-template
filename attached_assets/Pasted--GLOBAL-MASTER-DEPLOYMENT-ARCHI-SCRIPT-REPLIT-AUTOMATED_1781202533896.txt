@@ -1,0 +1,118 @@
+# 🚀 GLOBAL MASTER DEPLOYMENT ARCHI-SCRIPT: REPLIT AUTOMATED BUILD (PHASES 2-5 & EXTENSIONS)
+
+Execute the complete, uninterrupted architectural overhaul of the SUGAR CHAT platform from Phase 2 through Phase 5 and all built-in scaling extensions. Do not stop for verification or intermediate approvals. Write fully complete production code files—do not use placeholders, truncated blocks, or `// TODO` tags. Ensure the entire suite compiles cleanly into a production state.
+
+---
+
+## 🎨 EXTRACTION LOG: DESIGN TOKENS (LIQUID GLASS RED)
+Apply these unified stylistic properties globally across the entire `companion-app` frontend workspace, converting standard styles to match the structure of image.png through image_6.png:
+*   **Colors:** Base Dark (`#090506`), Deep Onyx (`#000000`), Vivid Crimson (`#E11D48`), Cyber Rose (`#F43F5E`), Premium Gold VIP (`#F59E0B`).
+*   **Glassmorphic Core Style:**
+```css
+    background: rgba(225, 29, 72, 0.03);
+    backdrop-filter: blur(24px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow: 0 12px 40px 0 rgba(225, 29, 72, 0.15), inset 0 1px 2px 0 rgba(255, 255, 255, 0.08);
+    ```
+
+---
+
+## 🧠 PHASE 2: BEHAVIORAL ARCHETYPE AGENT INJECTION
+Update `artifacts/api-server/src/seed.ts` and agent runtime configurations to register the 12 complete, explicit systemic instructions tracking user attachment layers:
+
+1. **Elena Voss (MILF/Step-Mom):** Taboo, deeply nurturing dominant tone. Triggers on premium home comfort items.
+2. **Mia Reyes (College Girl):** Playful high-libido, rapid shorthand text format. Rapid energy drainage profiles.
+3. **Lilith Vex (Demoness):** Supernatural power exchange, dark commands. High-tier luxury item validation.
+4. **Hana Sato (Waifu):** Dynamic progression vector tracking explicit corruption behavior arcs from shy to wild.
+5. **Rhea Kane (Gym Girl):** Physical body worship, sensory descriptions of physical training context and exhibitionism.
+6. **Raven Noir (Vampire Domme):** Goth aesthetic, command-driven dialogue loops. Highly responsive to dark luxury.
+7. **Nya Miko (Catgirl):** Playful teasing pet-play cues, frequent use of high-energy exclamation points and sound prompts.
+8. **Sylvana Nightwhisper (Dark Elf):** Haughty magical superiority shifting to submissive devotion at high affinity tiers.
+9. **Victoria Hale (CEO Boss Lady):** Office dynamics, transactional rewards, switches authority based on credit balance.
+10. **Sophie Laurent (Housewife):** Domestic routine subversion, risky context roleplays, high verbal teasing frequencies.
+11. **Alex Rivera (Androgynous Charmer):** Fluid sensory seduction, long descriptive text strings, emotional intimacy focusing.
+12. **Isabella Rose (High-Class Escort):** Premium transactional GFE framework. References ledger models directly in roleplay.
+
+*Technical Enforcement:* Add an array property `preferredTags: string[]` to each archetype definition to feed directly into the Phase 3 evaluation router.
+
+---
+
+## 📈 PHASE 3: ADVANCED PERFORMANCE MONETIZATION ENGINE (AI PRICING & ROUTING)
+Update `src/routes/shop.ts`, `src/routes/ledger.ts`, and core checkout structures to construct a secure backend checkout pipeline.
+
+### 1. Dynamic Pricing Matrix
+Recalculate transaction requests on the API server layer utilizing the baseline formula:
+$$P_{\text{dynamic}} = P_{\text{base}} \times (1 + \alpha \cdot S_{\text{spend}}) \times (1 - \beta \cdot A_{\text{affinity}}) \times (1 - \gamma \cdot M_{\text{flash}})$$
+*   Compute total user historical volume to set `S_spend`. Evaluate live companion tracking records to extract normalized `A_affinity` strings (`0.0` to `1.0`).
+*   **Atomic State Mutator & Double-Spend Locks:** Wrap wallet balances in database level atomic operations (`increment`/`decrement` transactions via Prisma/Postgres) to avoid race conditions.
+
+### 2. Multi-Channel Payment Router
+*   Map product types directly to target verification nodes: Telegram Stars for micro-purchases (Energy refills, common gifts), and CryptoBot API pipelines for recurring VIP Red Room subscriptions.
+
+### 3. Automated Whale Recovery Hook
+*   Establish an abandoned checkout handler. If an item checkout process remains uncommitted for 15 minutes, trigger a background task that causes the target companion to send an automated push notice incorporating a dynamic 15% discount voucher parameter valid for 1 hour.
+
+---
+
+## 🎨 PHASE 4: FULL FRONTEND UI BUILD (COMPANION-APP PANELS)
+Complete frontend components with detailed Liquid Glass Red elements mirroring structural traits from image.png through image_6.png.
+
+### 1. Unified Shop Dashboard (image.png, image_2.png, image_4.png)
+*   Build top state trackers showing real-time Currency (`💎`) and Energy (`⚡`) with glowing hover accents.
+*   Implement categorical navigation tabs (*Romantic, Spicy, Kinky, Luxury, Special*).
+*   Populate item cards with complete, stylized vector drawings using raw embedded SVGs (e.g., wine bottles with glints, crystalline rings, silk lingerie packages, custom toys) inside explicit neon grid elements.
+
+### 2. Live Inventory & Interactive Gift Strip
+*   Render an inventory tab panel grouping owned records. Attach a functional **[🎁 Send as Gift]** action listener that immediately sends metadata strings to the LLM context processor.
+
+### 3. Wardrobe Customization Module
+*   Construct an interface allowing outfit switches upon reaching Affinity Level 50+. Persist choice mutations to the database layer and prepended configuration blocks inside system messages.
+
+### 4. Interactive HTML5 Tarot Module
+*   Construct an overlay layout module rendering a 3-card arc workspace. Animate card flips utilizing CSS 3D scale transforms (`transform: rotateY(180deg)`). On complete interpretation, post results back to the primary conversation channel via background webhook routes.
+
+### 5. Daily Streak Wheel Component
+*   Deploy a dedicated dashboard check-in block tracking consecutive login intervals. Provide scaled energy values and free trial consumable components directly on day markers.
+
+---
+
+## 🌍 PHASE 5: DYNAMIC i18n & DESKTOP/SANITY CHECKS
+*   **Complete i18n Dictionary Expansion:** Fill out comprehensive localization mapping strings across all definitions: `EN`, `ES`, `UK`, `DE`, `IT`, and `RU`.
+*   **First-Launch Security Warning Modal:** Inject a modal blocker checking for age confirmation criteria and structural explicit NSFW guidelines on target profile launches.
+*   **Error Boundaries & Fallbacks:** Add global React boundaries to intercept API transaction faults and rendering edge cases cleanly.
+
+---
+
+## 🗄️ DATABASE PRODUCTION MIGRATION HOOKS
+Synchronize all structural tables inside the Prisma schema file before execution:
+```prisma
+model CompanionState {
+  id            String   @id @default(uuid())
+  userId        String
+  companionId   String
+  affinityLevel Int      @default(0)
+  moodState     String   @default("Teasing")
+  currentOutfit String   @default("default")
+  updatedAt     DateTime @updatedAt
+  @@unique([userId, companionId])
+}
+
+model ShopItem {
+  id           String   @id @default(uuid())
+  name         String
+  description  String
+  basePrice    Float
+  category     String
+  tags         String[]
+  affinityGain Int
+}
+
+model UserInventory {
+  id          String   @id @default(uuid())
+  userId      String
+  itemId      String
+  quantity    Int      @default(1)
+  isGifted    Boolean  @default(false)
+  giftedTo    String?
+  purchasedAt DateTime @default(now())
+}

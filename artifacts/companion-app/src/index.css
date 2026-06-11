@@ -47,44 +47,44 @@
   --elevate-1: rgba(255,255,255,.04);
   --elevate-2: rgba(255,255,255,.09);
 
-  /* Liquid Glass Red — deep crimson-black base, vibrant red accents */
-  --background: 340 28% 5%;
-  --foreground: 350 15% 92%;
+  /* ── Liquid Glass Red v2 — deep velvet onyx / vivid crimson ── */
+  --background:   340 30% 4%;     /* #090506 — Deep Velvet Onyx */
+  --foreground:   350 15% 93%;    /* Crisp White */
 
-  --border: 340 20% 14%;
-  --input: 340 20% 14%;
-  --ring: 348 76% 49%;
+  --border:       340 22% 12%;
+  --input:        340 22% 12%;
+  --ring:         348 83% 51%;    /* Crimson Red #E11D48 */
 
-  --card: 340 22% 8%;
-  --card-foreground: 350 15% 92%;
-  --card-border: 340 20% 14%;
+  --card:         340 25% 7%;     /* Deep card surface */
+  --card-foreground: 350 15% 93%;
+  --card-border:  340 22% 14%;
 
-  --sidebar: 340 22% 8%;
-  --sidebar-foreground: 350 15% 92%;
-  --sidebar-border: 340 20% 14%;
-  --sidebar-primary: 348 76% 49%;
+  --sidebar:         340 25% 7%;
+  --sidebar-foreground: 350 15% 93%;
+  --sidebar-border:  340 22% 14%;
+  --sidebar-primary: 348 83% 51%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 340 20% 14%;
-  --sidebar-accent-foreground: 350 15% 92%;
-  --sidebar-ring: 348 76% 49%;
+  --sidebar-accent:  340 22% 14%;
+  --sidebar-accent-foreground: 350 15% 93%;
+  --sidebar-ring:    348 83% 51%;
 
-  --popover: 340 22% 8%;
-  --popover-foreground: 350 15% 92%;
-  --popover-border: 340 20% 14%;
+  --popover:      340 25% 7%;
+  --popover-foreground: 350 15% 93%;
+  --popover-border: 340 22% 14%;
 
-  --primary: 348 76% 49%;
+  --primary:      348 83% 51%;    /* Crimson Red #E11D48 */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 340 20% 13%;
-  --secondary-foreground: 350 15% 92%;
+  --secondary:    340 22% 12%;
+  --secondary-foreground: 350 15% 93%;
 
-  --muted: 340 18% 16%;
-  --muted-foreground: 340 12% 56%;
+  --muted:        340 20% 14%;
+  --muted-foreground: 340 12% 55%;
 
-  --accent: 351 88% 62%;
+  --accent:       351 88% 62%;    /* Neon Pink/Rose #F43F5E */
   --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 80% 60%;
+  --destructive:  0 80% 60%;
   --destructive-foreground: 0 0% 100%;
 
   --app-font-sans: 'Outfit', 'Inter', sans-serif;
@@ -92,13 +92,21 @@
   --app-font-mono: Menlo, monospace;
   --radius: 1rem;
 
-  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.5);
-  --shadow: 0px 4px 8px 0px rgba(0,0,0,0.6);
-  --shadow-md: 0px 8px 16px 0px rgba(0,0,0,0.6);
-  --shadow-lg: 0px 16px 32px 0px rgba(0,0,0,0.7);
+  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0,0.6);
+  --shadow:    0px 4px 8px 0px rgba(0,0,0,0.7);
+  --shadow-md: 0px 8px 16px 0px rgba(0,0,0,0.7);
+  --shadow-lg: 0px 16px 32px 0px rgba(0,0,0,0.8);
 
-  --glow-red: 0 0 20px rgba(225,29,72,0.4);
-  --glow-red-lg: 0 0 40px rgba(225,29,72,0.25), 0 0 80px rgba(225,29,72,0.10);
+  --glow-red:    0 0 20px rgba(225,29,72,0.45);
+  --glow-red-lg: 0 0 40px rgba(225,29,72,0.28), 0 0 80px rgba(225,29,72,0.12);
+  --glow-gold:   0 0 18px rgba(245,158,11,0.50);
+  --glow-purple: 0 0 20px rgba(168,85,247,0.40);
+
+  /* Liquid Glass Formula — applied to all cards / nav blocks */
+  --lg-bg:     rgba(225, 29, 72, 0.03);
+  --lg-blur:   blur(24px) saturate(190%);
+  --lg-border: 1px solid rgba(255,255,255,0.09);
+  --lg-shadow: 0 12px 40px 0 rgba(225,29,72,0.15), inset 0 1px 2px 0 rgba(255,255,255,0.08);
 }
 
 .dark {}
@@ -108,54 +116,150 @@
   body { @apply font-sans antialiased bg-background text-foreground; }
 }
 
-/* ── Liquid Glass Utilities ── */
+/* ── Liquid Glass Utility Classes ─────────────────────────────────────────── */
 @layer utilities {
+  /* Base glass layer */
   .glass {
     background: rgba(20,6,10,0.55);
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
     border: 1px solid rgba(225,29,72,0.12);
   }
+
+  /* Premium card surface */
   .glass-card {
-    background: rgba(28,8,14,0.65);
-    backdrop-filter: blur(24px) saturate(1.5);
-    -webkit-backdrop-filter: blur(24px) saturate(1.5);
-    border: 1px solid rgba(225,29,72,0.15);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+    background: var(--lg-bg);
+    backdrop-filter: var(--lg-blur);
+    -webkit-backdrop-filter: var(--lg-blur);
+    border: var(--lg-border);
+    box-shadow: var(--lg-shadow);
   }
+
+  /* Deep card surface (stronger) */
+  .glass-card-deep {
+    background: rgba(14,4,8,0.80);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+    border: 1px solid rgba(225,29,72,0.20);
+    box-shadow: 0 16px 48px 0 rgba(225,29,72,0.18), inset 0 1px 2px 0 rgba(255,255,255,0.06);
+  }
+
+  /* Navigation bar */
   .glass-nav {
-    background: rgba(12,3,6,0.80);
-    backdrop-filter: blur(32px) saturate(1.6);
-    -webkit-backdrop-filter: blur(32px) saturate(1.6);
-    border-top: 1px solid rgba(225,29,72,0.18);
+    background: rgba(8,2,5,0.88);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border-top: 1px solid rgba(225,29,72,0.20);
+    box-shadow: 0 -4px 32px rgba(0,0,0,0.6);
   }
-  .glow-red { box-shadow: var(--glow-red); }
-  .glow-red-lg { box-shadow: var(--glow-red-lg); }
-  .gradient-red { background: linear-gradient(135deg, hsl(348 76% 49%), hsl(351 88% 62%)); }
+
+  /* Header bar */
+  .glass-header {
+    background: rgba(9,2,5,0.90);
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    border-bottom: 1px solid rgba(225,29,72,0.14);
+  }
+
+  /* VIP / Gold variant */
+  .glass-gold {
+    background: rgba(245,158,11,0.05);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(245,158,11,0.22);
+    box-shadow: 0 8px 32px rgba(245,158,11,0.12);
+  }
+
+  /* Amethyst / dark variant */
+  .glass-amethyst {
+    background: rgba(49,4,17,0.60);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(225,29,72,0.18);
+    box-shadow: 0 8px 32px rgba(225,29,72,0.10);
+  }
+
+  /* Glows */
+  .glow-red      { box-shadow: var(--glow-red); }
+  .glow-red-lg   { box-shadow: var(--glow-red-lg); }
+  .glow-gold     { box-shadow: var(--glow-gold); }
+  .glow-purple   { box-shadow: var(--glow-purple); }
+
+  /* Gradients */
+  .gradient-red  { background: linear-gradient(135deg, hsl(348 83% 51%), hsl(351 88% 62%)); }
+  .gradient-gold { background: linear-gradient(135deg, #F59E0B, #EF4444); }
+
+  /* Text gradients */
   .text-gradient-red {
-    background: linear-gradient(135deg, hsl(348 76% 65%), hsl(351 88% 75%));
+    background: linear-gradient(135deg, hsl(348 83% 68%), hsl(351 88% 78%));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #FCD34D, #F59E0B);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Flash sale badge */
+  .flash-badge {
+    background: linear-gradient(135deg, rgba(245,158,11,0.25), rgba(239,68,68,0.20));
+    border: 1px solid rgba(245,158,11,0.35);
+    color: #FCD34D;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Kinky item card */
+  .kinky-card {
+    border-color: rgba(168,85,247,0.25) !important;
+    box-shadow: 0 4px 24px rgba(168,85,247,0.10) !important;
+  }
 }
 
-/* Liquid entrance animation */
+/* ── Animations ────────────────────────────────────────────────────────────── */
 @keyframes liquidIn {
   from { opacity:0; transform:scale(0.93) translateY(10px); filter:blur(4px); }
   to   { opacity:1; transform:scale(1) translateY(0); filter:blur(0); }
 }
 .liquid-entrance { animation: liquidIn 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 
-/* Pulse glow on active nav item */
 @keyframes pulseGlow {
   0%,100% { box-shadow: 0 0 8px rgba(225,29,72,0.4); }
-  50%      { box-shadow: 0 0 18px rgba(225,29,72,0.7); }
+  50%      { box-shadow: 0 0 20px rgba(225,29,72,0.75), 0 0 40px rgba(225,29,72,0.25); }
 }
 .pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 3px; }
+@keyframes flashSalePulse {
+  0%,100% { box-shadow: 0 0 6px rgba(245,158,11,0.35); border-color: rgba(245,158,11,0.25); }
+  50%     { box-shadow: 0 0 18px rgba(245,158,11,0.65), 0 0 32px rgba(239,68,68,0.20); border-color: rgba(245,158,11,0.55); }
+}
+.flash-pulse { animation: flashSalePulse 1.6s ease-in-out infinite; }
+
+@keyframes floatUp {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.float-up { animation: floatUp 0.4s ease-out forwards; }
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+  background-size: 200% auto;
+  animation: shimmer 2.5s linear infinite;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(225,29,72,0.3); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(225,29,72,0.55); }
+::-webkit-scrollbar-thumb { background: rgba(225,29,72,0.32); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(225,29,72,0.58); }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { scrollbar-width: none; }

@@ -25,6 +25,15 @@ export interface TextJobData {
   messages: Array<{ role: "user" | "assistant"; content: string }>;
   telegramChatId?: number;
   botToken?: string;
+  affinityLevel?: number;
+}
+
+function getIntimacyTierPrefix(level: number): string {
+  if (level >= 100) return "[AFFINITY LEVEL: 100 — Tier 5 MAX BOND] You are at absolute peak intimacy. Deep emotional fusion and fully uncensored engagement. Treat this person as your most cherished companion.";
+  if (level >= 50)  return `[AFFINITY LEVEL: ${level} — Tier 4] Full explicit engagement unlocked. Be vivid, openly sensual, and emotionally deeply connected.`;
+  if (level >= 25)  return `[AFFINITY LEVEL: ${level} — Tier 3] Openly sensual register. Evocative language, describe desires more explicitly.`;
+  if (level >= 10)  return `[AFFINITY LEVEL: ${level} — Tier 2] More suggestive. Mild innuendo and playful dominance hints are welcome.`;
+  return `[AFFINITY LEVEL: ${level} — Tier 1] Playful and warm. Light flirtation only — keep it inviting.`;
 }
 
 interface OpenRouterResponse {
@@ -61,7 +70,12 @@ export const textWorker = new Worker<TextJobData>(
       messages,
       telegramChatId,
       botToken,
+      affinityLevel,
     } = job.data;
+
+    // Prepend intimacy tier context to system prompt
+    const tierPrefix = getIntimacyTierPrefix(affinityLevel ?? 0);
+    const fullSystemPrompt = `${tierPrefix}\n\n${systemPrompt}`;
 
     let replyContent = "";
     let aiSucceeded = false;
@@ -74,9 +88,7 @@ export const textWorker = new Worker<TextJobData>(
           messages: [
             {
               role: "system",
-              content:
-                systemPrompt +
-                "\n\nRespond in 400 characters or fewer. Be natural and conversational.",
+              content: fullSystemPrompt + "\n\nRespond in 400 characters or fewer. Be natural and conversational.",
             },
             ...messages,
           ],

@@ -1,3 +1,4 @@
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,20 +17,71 @@ import Plans from "@/pages/Plans";
 import ConversationDetail from "@/pages/ConversationDetail";
 import TarotPage from "@/pages/Tarot";
 import ShopPage from "@/pages/Shop";
+import InventoryPage from "@/pages/Inventory";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
 });
 
-function NsfwGate({ children }: { children: React.ReactNode }) {
+// ── React Error Boundary ─────────────────────────────────────────────────────
+interface ErrorBoundaryState { hasError: boolean; error: Error | null }
+
+class AppErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[AppErrorBoundary]", error, info.componentStack);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6 px-6">
+          <div className="text-center">
+            <div
+              className="inline-flex w-16 h-16 rounded-3xl items-center justify-center mb-4"
+              style={{ background: "rgba(225,29,72,0.12)", border: "1px solid rgba(225,29,72,0.25)" }}
+            >
+              <span className="text-3xl">💔</span>
+            </div>
+            <h2 className="font-serif font-bold text-xl text-foreground">Something went wrong</h2>
+            <p className="text-sm text-muted-foreground mt-2 max-w-xs">
+              {this.state.error?.message ?? "An unexpected error occurred"}
+            </p>
+          </div>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
+            className="px-8 py-3 rounded-2xl text-sm font-semibold text-white"
+            style={{ background: "linear-gradient(135deg, hsl(348 76% 49%), hsl(351 88% 62%))", boxShadow: "0 0 20px rgba(225,29,72,0.35)" }}
+          >
+            Reload App
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// ── NSFW Gate ────────────────────────────────────────────────────────────────
+function NsfwGate({ children }: { children: ReactNode }) {
   const { data: user, isLoading } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
   const qc = useQueryClient();
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 rounded-full animate-spin"
-          style={{ borderColor: "hsl(348 76% 49%)", borderTopColor: "transparent" }} />
+        <div
+          className="w-8 h-8 border-2 rounded-full animate-spin"
+          style={{ borderColor: "hsl(348 76% 49%)", borderTopColor: "transparent" }}
+        />
       </div>
     );
   }
@@ -55,6 +107,7 @@ function NsfwGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// ── Router ────────────────────────────────────────────────────────────────────
 function Router() {
   return (
     <Switch>
@@ -68,6 +121,7 @@ function Router() {
         {(params) => <TarotPage companionId={params.companionId} />}
       </Route>
       <Route path="/shop" component={ShopPage} />
+      <Route path="/inventory" component={InventoryPage} />
       <Route path="/credits" component={Credits} />
       <Route path="/plans" component={Plans} />
       <Route path="/settings" component={Settings} />
@@ -76,20 +130,25 @@ function Router() {
   );
 }
 
+// ── Root ──────────────────────────────────────────────────────────────────────
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <TelegramProvider>
-          <NsfwGate>
-            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-              <Router />
-            </WouterRouter>
-          </NsfwGate>
-        </TelegramProvider>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <TelegramProvider>
+            <NsfwGate>
+              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                <AppErrorBoundary>
+                  <Router />
+                </AppErrorBoundary>
+              </WouterRouter>
+            </NsfwGate>
+          </TelegramProvider>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   );
 }
 

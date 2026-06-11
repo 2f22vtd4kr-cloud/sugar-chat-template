@@ -825,6 +825,14 @@ bot.on("text", async (ctx) => {
 
   contextMessages.push({ role: "user", content: userText });
 
+  // Fetch current affinity so the worker can inject the correct intimacy tier prefix
+  const currentConv = await db
+    .select({ affinity: conversationsTable.affinity })
+    .from(conversationsTable)
+    .where(eq(conversationsTable.id, activeSession.conversationId))
+    .limit(1)
+    .then((r) => r[0]);
+
   await textQueue.add("process-text", {
     conversationId: activeSession.conversationId,
     userId: user.id,
@@ -834,6 +842,7 @@ bot.on("text", async (ctx) => {
     messages: contextMessages,
     telegramChatId: chatId,
     botToken: config.telegramBotToken,
+    affinityLevel: currentConv?.affinity ?? 0,
   });
 
   await ctx.sendChatAction("typing");

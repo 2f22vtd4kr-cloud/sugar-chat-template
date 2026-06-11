@@ -1,10 +1,16 @@
-import { Queue, Worker } from "bullmq";
+import { Queue, Worker, type Job } from "bullmq";
 import { createBullConnectionOptions } from "../lib/redis.js";
 import { config } from "../lib/config.js";
-import { db, messagesTable, conversationsTable, usersTable, ledgerEntriesTable } from "@workspace/db";
+import {
+  db,
+  messagesTable,
+  conversationsTable,
+  usersTable,
+  ledgerEntriesTable,
+} from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import axios from "axios";
+import axios, { type AxiosResponse } from "axios";
 
 export const textQueue = new Queue("text-processing", {
   connection: createBullConnectionOptions(),
@@ -21,20 +27,57 @@ export interface TextJobData {
   botToken?: string;
 }
 
+interface OpenRouterResponse {
+  choices: Array<{ message: { content: string } }>;
+}
+
+async function refundCredit(userId: string): Promise<void> {
+  try {
+    await db
+      .update(usersTable)
+      .set({ credits: sql`${usersTable.credits} + 1` })
+      .where(eq(usersTable.id, userId));
+
+    await db.insert(ledgerEntriesTable).values({
+      id: randomUUID(),
+      userId,
+      amount: 1,
+      type: "DEPOSIT",
+      referenceId: randomUUID(),
+      description: "Auto-refund — AI response failed",
+    });
+  } catch (e) {
+    console.error("[TextWorker] Refund failed:", e);
+  }
+}
+
 export const textWorker = new Worker<TextJobData>(
   "text-processing",
-  async (job) => {
-    const { conversationId, userId, systemPrompt, messages, telegramChatId, botToken } = job.data;
+  async (job: Job<TextJobData>) => {
+    const {
+      conversationId,
+      userId,
+      systemPrompt,
+      messages,
+      telegramChatId,
+      botToken,
+    } = job.data;
 
     let replyContent = "";
+    let aiSucceeded = false;
 
     try {
-      const response = await axios.post(
+      const response: AxiosResponse<OpenRouterResponse> = await axios.post(
         `${config.openrouterBaseUrl}/chat/completions`,
         {
           model: config.openrouterModel,
           messages: [
-            { role: "system", content: systemPrompt + "\n\nRespond in 400 characters or fewer. Be natural and conversational." },
+            {
+              role: "system",
+              content:
+                systemPrompt +
+                "\n\nRespond in 400 characters or fewer. Be natural and conversational.",
+            },
             ...messages,
           ],
           max_tokens: 200,
@@ -50,11 +93,13 @@ export const textWorker = new Worker<TextJobData>(
       );
 
       replyContent =
-        (response.data as { choices: Array<{ message: { content: string } }> })
-          .choices[0]?.message?.content ?? "I'm here with you.";
+        response.data.choices[0]?.message?.content ?? "I'm here with you.";
+      aiSucceeded = true;
     } catch (err) {
       console.error("[TextWorker] AI call failed:", err);
-      replyContent = "I'm thinking... give me a moment.";
+      // Refund the credit immediately — job will still complete successfully
+      await refundCredit(userId);
+      replyContent = "I'm thinking... give me a moment. 💭";
     }
 
     // Save companion reply message
@@ -67,22 +112,27 @@ export const textWorker = new Worker<TextJobData>(
       content: replyContent,
     });
 
-    // Update conversation updatedAt and affinity (+1 per text)
+    // Update conversation updatedAt and affinity (+1 per successful text)
     await db
       .update(conversationsTable)
       .set({
         updatedAt: new Date(),
-        affinity: sql`LEAST(${conversationsTable.affinity} + 1, 100)`,
+        ...(aiSucceeded
+          ? { affinity: sql`LEAST(${conversationsTable.affinity} + 1, 100)` }
+          : {}),
       })
       .where(eq(conversationsTable.id, conversationId));
 
     // Send reply via Telegram bot if chatId provided
     if (telegramChatId && botToken) {
       try {
-        await axios.post(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-          chat_id: telegramChatId,
-          text: replyContent,
-        });
+        await axios.post(
+          `https://api.telegram.org/bot${botToken}/sendMessage`,
+          {
+            chat_id: telegramChatId,
+            text: replyContent,
+          }
+        );
       } catch (err) {
         console.error("[TextWorker] Telegram send failed:", err);
       }
@@ -96,14 +146,11 @@ export const textWorker = new Worker<TextJobData>(
   }
 );
 
-textWorker.on("failed", (job, err) => {
-  console.error(`[TextWorker] Job ${job?.id} failed:`, err.message);
+// Hard failure (job threw / retries exhausted) — refund if not already refunded
+textWorker.on("failed", (job: Job<TextJobData> | undefined, err: Error) => {
+  console.error(`[TextWorker] Job ${job?.id ?? "unknown"} failed:`, err.message);
 
-  // Refund credit on failure
-  if (job?.data.userId) {
-    db.update(usersTable)
-      .set({ credits: sql`${usersTable.credits} + 1` })
-      .where(eq(usersTable.id, job.data.userId))
-      .catch((e) => console.error("[TextWorker] Refund failed:", e));
+  if (job?.data?.userId) {
+    void refundCredit(job.data.userId);
   }
 });

@@ -1,6 +1,13 @@
 import { Telegraf, Markup, type Context } from "telegraf";
 import { config } from "../lib/config.js";
-import { db, usersTable, companionsTable, conversationsTable, messagesTable, ledgerEntriesTable } from "@workspace/db";
+import {
+  db,
+  usersTable,
+  companionsTable,
+  conversationsTable,
+  messagesTable,
+  ledgerEntriesTable,
+} from "@workspace/db";
 import { eq, and, desc, lt, isNull, or } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { textQueue } from "../queues/text-queue.js";
@@ -10,31 +17,75 @@ import { DEFAULT_COMPANIONS } from "../lib/companion-catalog.js";
 
 export const bot = new Telegraf(config.telegramBotToken);
 
-// Telegram Stars credit packages
-export const STARS_PACKAGES: Record<string, { credits: number; stars: number; label: string; description: string }> = {
-  starter: { credits: 50, stars: 50, label: "Starter Pack", description: "50 credits to chat and generate images" },
-  popular: { credits: 200, stars: 175, label: "Popular Pack", description: "200 credits — save 12% vs Starter" },
-  premium: { credits: 500, stars: 399, label: "Premium Pack", description: "500 credits — save 20% vs Starter" },
+// ── Telegram Stars credit packages ──────────────────────────────────────────
+export const STARS_PACKAGES: Record<
+  string,
+  { credits: number; stars: number; label: string; description: string }
+> = {
+  starter: {
+    credits: 50,
+    stars: 50,
+    label: "Starter Pack",
+    description: "50 credits to chat and generate images",
+  },
+  popular: {
+    credits: 200,
+    stars: 175,
+    label: "Popular Pack",
+    description: "200 credits — save 12% vs Starter",
+  },
+  premium: {
+    credits: 500,
+    stars: 399,
+    label: "Premium Pack",
+    description: "500 credits — save 20% vs Starter",
+  },
 };
 
-// Active companion sessions: chatId -> { companionId, conversationId }
-const activeSessions = new Map<number, { companionId: string; conversationId: string; companionName: string }>();
-const companionOrder = new Map(DEFAULT_COMPANIONS.map((companion, index) => [companion.id, index]));
+// ── Session state ────────────────────────────────────────────────────────────
+const activeSessions = new Map<
+  number,
+  { companionId: string; conversationId: string; companionName: string }
+>();
+const companionOrder = new Map(
+  DEFAULT_COMPANIONS.map((c, i) => [c.id, i])
+);
 
 function sortCompanions<T extends { id: string }>(companions: T[]): T[] {
   return companions.sort((a, b) => {
-    const aOrder = companionOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-    const bOrder = companionOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-    return aOrder - bOrder;
+    const aO = companionOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+    const bO = companionOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+    return aO - bO;
   });
 }
 
-function companionButtonLabel(name: string, personality: string): string {
-  const shortPersonality = personality.length > 34 ? `${personality.slice(0, 31)}…` : personality;
-  return `${name} — ${shortPersonality}`;
+// ── i18n welcome strings ─────────────────────────────────────────────────────
+const WELCOME_MESSAGES: Record<string, (name: string, credits: number) => string> = {
+  en: (name, credits) =>
+    `🌙 Welcome back, ${name}!\n\nYour companions have been waiting for you.\n\n⚡ Energy: ${credits} credits\n\nChoose a companion and let the fantasy begin…`,
+  es: (name, credits) =>
+    `🌙 ¡Bienvenido de vuelta, ${name}!\n\nTus compañeras te han estado esperando.\n\n⚡ Energía: ${credits} créditos\n\nElige una compañera y que comience la fantasía…`,
+  uk: (name, credits) =>
+    `🌙 З поверненням, ${name}!\n\nТвої подруги чекали на тебе.\n\n⚡ Енергія: ${credits} кредитів\n\nОбери подругу та поринь у фантазію…`,
+  de: (name, credits) =>
+    `🌙 Willkommen zurück, ${name}!\n\nDeine Companions haben auf dich gewartet.\n\n⚡ Energie: ${credits} Credits\n\nWähle eine Begleiterin und lass die Fantasie beginnen…`,
+  it: (name, credits) =>
+    `🌙 Bentornato, ${name}!\n\nLe tue compagne ti stavano aspettando.\n\n⚡ Energia: ${credits} crediti\n\nScegli una compagna e lasciati andare alla fantasia…`,
+  ru: (name, credits) =>
+    `🌙 С возвращением, ${name}!\n\nТвои подруги ждали тебя.\n\n⚡ Энергия: ${credits} кредитов\n\nВыбери подругу и начни фантазию…`,
+};
+
+function getWelcomeMessage(
+  langCode: string | undefined,
+  name: string,
+  credits: number
+): string {
+  const lang = langCode?.slice(0, 2).toLowerCase() ?? "en";
+  const fn = WELCOME_MESSAGES[lang] ?? WELCOME_MESSAGES["en"]!;
+  return fn(name, credits);
 }
 
-// Upsert user and return DB user
+// ── User upsert ──────────────────────────────────────────────────────────────
 async function upsertUser(telegramId: number, username?: string) {
   const telegramIdBigInt = BigInt(telegramId);
   let user = await db
@@ -53,7 +104,12 @@ async function upsertUser(telegramId: number, username?: string) {
       credits: 10,
       freeImagesSent: 0,
     });
-    user = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1).then((r) => r[0]!);
+    user = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.id, id))
+      .limit(1)
+      .then((r) => r[0]!);
     console.log(`[Bot] New user created: ${telegramId}`);
   }
 
@@ -62,46 +118,327 @@ async function upsertUser(telegramId: number, username?: string) {
 
 const MINI_APP_BASE = `https://t.me/${config.telegramBotUsername}/app`;
 
-// /start command
+// ── /start ───────────────────────────────────────────────────────────────────
 bot.start(async (ctx) => {
-  const { id, username } = ctx.from;
+  const { id, username, language_code } = ctx.from;
   const user = await upsertUser(id, username);
+  const payload = ctx.payload ?? "";
 
-  const requestedCompanionId = ctx.payload?.startsWith("companion_")
-    ? ctx.payload.slice("companion_".length)
-    : null;
-
-  if (requestedCompanionId) {
-    await selectCompanion(ctx, requestedCompanionId);
+  // Deep-link: companion_<id>
+  if (payload.startsWith("companion_")) {
+    await selectCompanion(ctx, payload.slice("companion_".length));
     return;
   }
 
+  // Deep-link: resume_<conversationId> — restore session from Mini App handoff
+  if (payload.startsWith("resume_")) {
+    const conversationId = payload.slice("resume_".length);
+    const conv = await db
+      .select()
+      .from(conversationsTable)
+      .where(
+        and(
+          eq(conversationsTable.id, conversationId),
+          eq(conversationsTable.userId, user.id)
+        )
+      )
+      .limit(1)
+      .then((r) => r[0]);
+
+    if (conv) {
+      const companion = await db
+        .select()
+        .from(companionsTable)
+        .where(eq(companionsTable.id, conv.companionId))
+        .limit(1)
+        .then((r) => r[0]);
+
+      if (companion && ctx.chat) {
+        activeSessions.set(ctx.chat.id, {
+          companionId: companion.id,
+          conversationId: conv.id,
+          companionName: companion.name,
+        });
+
+        await ctx.reply(
+          `✨ Conversation resumed with ${companion.name}.\n\nAffinity: ${conv.affinity}/100\n\nSend a message to continue. Use /cancel to exit.`
+        );
+        return;
+      }
+    }
+
+    // Fallback if conversation not found
+    await ctx.reply("Could not resume that conversation. Starting fresh…");
+  }
+
+  // ref_<userId> — affiliate referral tracking (log, then show normal start)
+  if (payload.startsWith("ref_")) {
+    const referrerId = payload.slice("ref_".length);
+    console.log(
+      `[Affiliate] User ${user.id} joined via referral from ${referrerId}`
+    );
+  }
+
   const name = user.username ? `@${user.username}` : "there";
+  const welcomeText = getWelcomeMessage(language_code, name, user.credits);
 
   await ctx.reply(
-    `✨ Welcome back, ${name}!\n\nYour companions are waiting for you.\n💎 Balance: ${user.credits} credits`,
+    welcomeText,
     Markup.keyboard([
-      [Markup.button.webApp("💜 Choose Character", `${MINI_APP_BASE}?startapp=companions`)],
+      [Markup.button.webApp("💜 Select Companion", `${MINI_APP_BASE}?startapp=companions`)],
       [
-        Markup.button.webApp("👑 Subscription", `${MINI_APP_BASE}?startapp=plans`),
+        Markup.button.webApp("👑 Premium Subscription", `${MINI_APP_BASE}?startapp=plans`),
         Markup.button.webApp("⚙️ Settings", `${MINI_APP_BASE}?startapp=settings`),
       ],
     ]).resize()
   );
 });
 
-// /cancel command — exits any active companion session
+// ── /help ────────────────────────────────────────────────────────────────────
+bot.command("help", async (ctx) => {
+  await ctx.reply(
+    `🆘 *Sugar Chat — Help Guide*\n\n` +
+      `Here's everything you can do:\n\n` +
+      `🔮 */start* — Open the main menu & choose a companion\n` +
+      `⚡ */energy* — Check your current credit balance\n` +
+      `💾 */savechat* — Save your current conversation context\n` +
+      `🤝 */affiliate* — Get your referral link & earn free credits\n` +
+      `🖼️ */prompt* — Customize your dialogue settings\n` +
+      `🚫 */cancel* — Exit the current companion session\n\n` +
+      `*How credits work:*\n` +
+      `• 1 credit per text message\n` +
+      `• 3 credits per AI-generated image\n` +
+      `• Buy more with Telegram Stars ⭐\n\n` +
+      `Need more help? Tap the button below.`,
+    {
+      parse_mode: "Markdown",
+      ...Markup.inlineKeyboard([
+        [
+          Markup.button.webApp("📱 Open Mini App", MINI_APP_BASE),
+          Markup.button.callback("⭐ Buy Credits", "buy_menu"),
+        ],
+        [Markup.button.webApp("👑 Get Subscription", `${MINI_APP_BASE}?startapp=plans`)],
+      ]),
+    }
+  );
+});
+
+// ── /savechat ────────────────────────────────────────────────────────────────
+bot.command("savechat", async (ctx) => {
+  const chatId = ctx.chat.id;
+  const session = activeSessions.get(chatId);
+
+  if (!session) {
+    await ctx.reply(
+      "No active session to save. Use /start to choose a companion first."
+    );
+    return;
+  }
+
+  try {
+    // Fetch recent messages as checkpoint
+    const recentMessages = await db
+      .select()
+      .from(messagesTable)
+      .where(eq(messagesTable.conversationId, session.conversationId))
+      .orderBy(desc(messagesTable.createdAt))
+      .limit(20);
+
+    const messageCount = recentMessages.length;
+    const lastMessage = recentMessages[0];
+
+    // Update conversation timestamp to mark it as recently checkpointed
+    await db
+      .update(conversationsTable)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversationsTable.id, session.conversationId));
+
+    const preview = lastMessage
+      ? lastMessage.content.slice(0, 60) + (lastMessage.content.length > 60 ? "…" : "")
+      : "No messages yet";
+
+    await ctx.reply(
+      `💾 *Conversation saved!*\n\n` +
+        `Companion: ${session.companionName}\n` +
+        `Messages in memory: ${messageCount}\n` +
+        `Last message: _${preview}_\n\n` +
+        `Your conversation is safely stored. Continue anytime! 🌙`,
+      { parse_mode: "Markdown" }
+    );
+  } catch (err) {
+    console.error("[Bot] /savechat error:", err);
+    await ctx.reply("Failed to save conversation. Please try again.");
+  }
+});
+
+// ── /energy ──────────────────────────────────────────────────────────────────
+bot.command("energy", async (ctx) => {
+  const { id: telegramId, username } = ctx.from;
+  const user = await upsertUser(telegramId, username);
+
+  // Get last 5 ledger entries for context
+  const recentEntries = await db
+    .select()
+    .from(ledgerEntriesTable)
+    .where(eq(ledgerEntriesTable.userId, user.id))
+    .orderBy(desc(ledgerEntriesTable.createdAt))
+    .limit(5);
+
+  const activityLines = recentEntries
+    .map((e) => {
+      const sign = e.amount >= 0 ? "+" : "";
+      return `  ${sign}${e.amount} — ${e.description ?? e.type}`;
+    })
+    .join("\n");
+
+  const energyBar = buildEnergyBar(user.credits);
+
+  await ctx.reply(
+    `⚡ *Energy Balance*\n\n` +
+      `${energyBar}\n` +
+      `Current credits: *${user.credits}*\n\n` +
+      (activityLines ? `*Recent activity:*\n${activityLines}\n\n` : "") +
+      `Top up to keep the fire going 🔥`,
+    {
+      parse_mode: "Markdown",
+      ...Markup.inlineKeyboard([
+        [Markup.button.callback("⭐ Buy Credits with Stars", "buy_menu")],
+        [Markup.button.webApp("💎 Full Ledger", `${MINI_APP_BASE}?startapp=profile`)],
+      ]),
+    }
+  );
+});
+
+function buildEnergyBar(credits: number): string {
+  const max = 200;
+  const filled = Math.min(Math.round((credits / max) * 10), 10);
+  const empty = 10 - filled;
+  return `[${"█".repeat(filled)}${"░".repeat(empty)}] ${credits}⚡`;
+}
+
+// ── /affiliate ───────────────────────────────────────────────────────────────
+bot.command("affiliate", async (ctx) => {
+  const { id: telegramId, username } = ctx.from;
+  const user = await upsertUser(telegramId, username);
+
+  // Generate referral deep-link using user's DB id (base64-encoded for URL safety)
+  const refCode = Buffer.from(user.id).toString("base64url").slice(0, 16);
+  const referralLink = `https://t.me/${config.telegramBotUsername}?start=ref_${user.id}`;
+
+  await ctx.reply(
+    `🤝 *Your Affiliate Link*\n\n` +
+      `Share this link and earn *10 free credits* for every friend who joins!\n\n` +
+      `\`${referralLink}\`\n\n` +
+      `🔑 Your referral code: \`${refCode}\`\n\n` +
+      `Every new user who signs up through your link grants both of you bonus credits. Start sharing now! 💜`,
+    {
+      parse_mode: "Markdown",
+      ...Markup.inlineKeyboard([
+        [
+          Markup.button.switchToChat("📤 Share with a friend", referralLink),
+        ],
+      ]),
+    }
+  );
+});
+
+// ── /prompt ──────────────────────────────────────────────────────────────────
+bot.command("prompt", async (ctx) => {
+  const chatId = ctx.chat.id;
+  const session = activeSessions.get(chatId);
+
+  if (!session) {
+    await ctx.reply(
+      "Start a companion session first with /start, then use /prompt to customize."
+    );
+    return;
+  }
+
+  await ctx.reply(
+    `🎨 *Dialogue Customization — ${session.companionName}*\n\n` +
+      `Adjust the conversational style of your companion:\n\n` +
+      `Choose a mode:`,
+    {
+      parse_mode: "Markdown",
+      ...Markup.inlineKeyboard([
+        [
+          Markup.button.callback("💬 Playful & Teasing", `prompt:playful:${session.conversationId}`),
+          Markup.button.callback("🔥 Intense & Bold", `prompt:intense:${session.conversationId}`),
+        ],
+        [
+          Markup.button.callback("💜 Romantic & Deep", `prompt:romantic:${session.conversationId}`),
+          Markup.button.callback("😈 Dark & Dominant", `prompt:dark:${session.conversationId}`),
+        ],
+        [
+          Markup.button.callback("🌸 Sweet & Gentle", `prompt:sweet:${session.conversationId}`),
+          Markup.button.callback("⚡ Wild & Spontaneous", `prompt:wild:${session.conversationId}`),
+        ],
+      ]),
+    }
+  );
+});
+
+// Prompt mode selection handler
+bot.action(/^prompt:([^:]+):(.+)$/, async (ctx) => {
+  await ctx.answerCbQuery();
+
+  const mode = ctx.match[1] as string;
+  const conversationId = ctx.match[2] as string;
+
+  const PROMPT_INJECTIONS: Record<string, string> = {
+    playful:  "Be extra playful, teasing, and lighthearted. Use humor and witty banter.",
+    intense:  "Be bold, direct, and intensely passionate. Raise the heat with every message.",
+    romantic: "Focus on deep emotional connection, tender words, and slow-burn romance.",
+    dark:     "Lean into your dark, dominant side. Be commanding, mysterious, and possessive.",
+    sweet:    "Be soft, gentle, and nurturing. Express genuine warmth and affection.",
+    wild:     "Be spontaneous, unpredictable, and electrifying. Keep the user on their toes.",
+  };
+
+  const injection = PROMPT_INJECTIONS[mode] ?? "";
+  const modeEmojis: Record<string, string> = {
+    playful: "💬", intense: "🔥", romantic: "💜", dark: "😈", sweet: "🌸", wild: "⚡",
+  };
+  const emoji = modeEmojis[mode] ?? "✨";
+
+  // Store mode injection as a system message in the conversation
+  await db.insert(messagesTable).values({
+    id: randomUUID(),
+    conversationId,
+    sender: "companion",
+    type: "text",
+    content: `[System: Dialogue mode updated — ${mode}. ${injection}]`,
+  });
+
+  const modeLabels: Record<string, string> = {
+    playful: "Playful & Teasing",
+    intense: "Intense & Bold",
+    romantic: "Romantic & Deep",
+    dark: "Dark & Dominant",
+    sweet: "Sweet & Gentle",
+    wild: "Wild & Spontaneous",
+  };
+
+  await ctx.reply(
+    `${emoji} *Mode set: ${modeLabels[mode] ?? mode}*\n\n${injection}\n\nYour companion will adapt from the next message onwards. 🌙`,
+    { parse_mode: "Markdown" }
+  );
+});
+
+// ── /cancel ──────────────────────────────────────────────────────────────────
 bot.command("cancel", async (ctx) => {
   const chatId = ctx.chat.id;
   if (activeSessions.has(chatId)) {
     activeSessions.delete(chatId);
-    await ctx.reply("Session ended. Use /start to begin again.");
+    await ctx.reply(
+      "Session ended. Use /start to begin again.",
+      Markup.removeKeyboard()
+    );
   } else {
     await ctx.reply("No active session. Use /start to choose a companion.");
   }
 });
 
-// /buy command — shows Stars credit packages
+// ── /buy ─────────────────────────────────────────────────────────────────────
 bot.command("buy", async (ctx) => {
   await ctx.reply(
     "⭐ Buy Credits with Telegram Stars\n\nPick a credit pack:",
@@ -140,7 +477,7 @@ bot.action(/^stars_buy:(.+)$/, async (ctx) => {
   }
 });
 
-// Buy menu action from /start button
+// Buy menu action from inline buttons
 bot.action("buy_menu", async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.reply(
@@ -153,7 +490,7 @@ bot.action("buy_menu", async (ctx) => {
   );
 });
 
-// Pre-checkout: always approve Stars payments (currency XTR has no shipping)
+// ── Pre-checkout & Payment ───────────────────────────────────────────────────
 bot.on("pre_checkout_query", async (ctx) => {
   const query = ctx.preCheckoutQuery;
   if (query.currency !== "XTR") {
@@ -163,15 +500,19 @@ bot.on("pre_checkout_query", async (ctx) => {
   await ctx.answerPreCheckoutQuery(true);
 });
 
-// Successful payment → credit user
 bot.on("message", async (ctx, next) => {
-  const msg = ctx.message as any;
+  const msg = ctx.message as Record<string, unknown>;
 
-  if (msg.successful_payment) {
-    const payment = msg.successful_payment;
+  if (msg["successful_payment"]) {
+    const payment = msg["successful_payment"] as {
+      currency: string;
+      invoice_payload: string;
+      telegram_payment_charge_id?: string;
+    };
+
     if (payment.currency !== "XTR") return next();
 
-    const payload = payment.invoice_payload as string;
+    const payload = payment.invoice_payload;
     const paymentId = payment.telegram_payment_charge_id ?? randomUUID();
     const { id: telegramId, username } = ctx.from!;
     const user = await upsertUser(telegramId, username);
@@ -182,13 +523,18 @@ bot.on("message", async (ctx, next) => {
       try {
         const { activateSubscription } = await import("../routes/plans.js");
         await activateSubscription(user.id, planId, paymentId);
-        const planNames: Record<string, string> = { weekly: "Weekly Pass", monthly: "Monthly VIP" };
+        const planNames: Record<string, string> = {
+          weekly: "Weekly Pass",
+          monthly: "Monthly VIP",
+        };
         await ctx.reply(
           `✅ Subscription activated!\n\nYour ${planNames[planId] ?? planId} is now active.\n\nEnjoy unlimited chats! Use /start to continue.`
         );
       } catch (err) {
         console.error("[Bot] Subscription activation failed:", err);
-        await ctx.reply("Payment received. Your subscription is being activated. Please wait a moment.");
+        await ctx.reply(
+          "Payment received. Your subscription is being activated. Please wait a moment."
+        );
       }
       return;
     }
@@ -197,7 +543,9 @@ bot.on("message", async (ctx, next) => {
     const pkg = STARS_PACKAGES[payload];
 
     if (!pkg) {
-      await ctx.reply("Payment received but package not found. Please contact support.");
+      await ctx.reply(
+        "Payment received but package not found. Please contact support."
+      );
       return;
     }
 
@@ -225,7 +573,7 @@ bot.on("message", async (ctx, next) => {
       .then((r) => r[0]!);
 
     await ctx.reply(
-      `✅ Payment confirmed!\n\n+${pkg.credits} credits added.\nNew balance: ${updatedUser.credits} credits\n\nEnjoy chatting with your companions! Use /start to continue.`
+      `✅ Payment confirmed!\n\n+${pkg.credits} credits added.\nNew balance: ${updatedUser.credits} credits\n\nEnjoy chatting! ⚡`
     );
     return;
   }
@@ -233,6 +581,7 @@ bot.on("message", async (ctx, next) => {
   return next();
 });
 
+// ── Companion selection ──────────────────────────────────────────────────────
 async function selectCompanion(ctx: Context, companionId: string): Promise<void> {
   if (!ctx.from) {
     await ctx.reply("Open this in a Telegram chat to select a companion.");
@@ -256,14 +605,21 @@ async function selectCompanion(ctx: Context, companionId: string): Promise<void>
     .then((r) => r[0]);
 
   if (!companion) {
-    await ctx.reply("Companion not found. Use /start to refresh the companion list.");
+    await ctx.reply(
+      "Companion not found. Use /start to refresh the companion list."
+    );
     return;
   }
 
   let conversation = await db
     .select()
     .from(conversationsTable)
-    .where(and(eq(conversationsTable.userId, user.id), eq(conversationsTable.companionId, companionId)))
+    .where(
+      and(
+        eq(conversationsTable.userId, user.id),
+        eq(conversationsTable.companionId, companionId)
+      )
+    )
     .limit(1)
     .then((r) => r[0]);
 
@@ -282,7 +638,12 @@ async function selectCompanion(ctx: Context, companionId: string): Promise<void>
       type: "text",
       content: companion.greetingText,
     });
-    conversation = await db.select().from(conversationsTable).where(eq(conversationsTable.id, convId)).limit(1).then((r) => r[0]!);
+    conversation = await db
+      .select()
+      .from(conversationsTable)
+      .where(eq(conversationsTable.id, convId))
+      .limit(1)
+      .then((r) => r[0]!);
   }
 
   activeSessions.set(chatId, {
@@ -292,12 +653,12 @@ async function selectCompanion(ctx: Context, companionId: string): Promise<void>
   });
 
   await ctx.reply(
-    `You're now chatting with ${companion.name}.\n\nAffinity: ${conversation.affinity}/100\n\nSend a message to chat. Use /image to request a picture (3 credits). Use /cancel to exit.`
+    `💜 You're now chatting with *${companion.name}*.\n\nAffinity: ${conversation.affinity}/100\n\nSend a message to chat.\n/image — generate a picture (3 credits)\n/savechat — save context\n/prompt — customize dialogue\n/cancel — exit`,
+    { parse_mode: "Markdown" }
   );
   await ctx.reply(companion.greetingText);
 }
 
-// Companion selection
 bot.action(/^companion:(.+)$/, async (ctx) => {
   await ctx.answerCbQuery();
   await selectCompanion(ctx, ctx.match[1]);
@@ -309,7 +670,7 @@ bot.action("credits", async (ctx) => {
   const user = await upsertUser(telegramId, username);
   await ctx.answerCbQuery();
   await ctx.reply(
-    `Credit Vault\n\nCurrent balance: ${user.credits} credits`,
+    `⚡ Credit Vault\n\nCurrent balance: ${user.credits} credits`,
     Markup.inlineKeyboard([
       [Markup.button.callback("⭐ Buy with Stars", "buy_menu")],
       [Markup.button.url("Open Credit Store", `https://t.me/${config.telegramBotUsername}/app`)],
@@ -317,13 +678,15 @@ bot.action("credits", async (ctx) => {
   );
 });
 
-// /image command — request image in active session
+// ── /image ───────────────────────────────────────────────────────────────────
 bot.command("image", async (ctx) => {
   const chatId = ctx.chat.id;
   const session = activeSessions.get(chatId);
 
   if (!session) {
-    await ctx.reply("No active companion session. Use /start to choose a companion.");
+    await ctx.reply(
+      "No active companion session. Use /start to choose a companion."
+    );
     return;
   }
 
@@ -334,18 +697,27 @@ bot.command("image", async (ctx) => {
   if (!hasFreeImage && user.credits < 3) {
     await ctx.reply(
       `Not enough credits. You need 3 credits for an image. You have ${user.credits}.`,
-      Markup.inlineKeyboard([[Markup.button.callback("⭐ Buy Credits", "buy_menu")]])
+      Markup.inlineKeyboard([
+        [Markup.button.callback("⭐ Buy Credits", "buy_menu")],
+      ])
     );
     return;
   }
 
-  const prompt = ctx.message.text.replace("/image", "").trim() || "a beautiful portrait";
+  const prompt =
+    ctx.message.text.replace("/image", "").trim() || "a beautiful portrait";
 
   await db.transaction(async (tx) => {
     if (hasFreeImage) {
-      await tx.update(usersTable).set({ freeImagesSent: sql`${usersTable.freeImagesSent} + 1` }).where(eq(usersTable.id, user.id));
+      await tx
+        .update(usersTable)
+        .set({ freeImagesSent: sql`${usersTable.freeImagesSent} + 1` })
+        .where(eq(usersTable.id, user.id));
     } else {
-      await tx.update(usersTable).set({ credits: sql`${usersTable.credits} - 3` }).where(eq(usersTable.id, user.id));
+      await tx
+        .update(usersTable)
+        .set({ credits: sql`${usersTable.credits} - 3` })
+        .where(eq(usersTable.id, user.id));
       await tx.insert(ledgerEntriesTable).values({
         id: randomUUID(),
         userId: user.id,
@@ -357,7 +729,7 @@ bot.command("image", async (ctx) => {
     }
   });
 
-  await ctx.reply("Generating your image... this takes a moment.");
+  await ctx.reply("Generating your image… this takes a moment. 🎨");
 
   const ledgerEntryId = randomUUID();
   await imageQueue.add("generate-image", {
@@ -380,13 +752,13 @@ bot.command("image", async (ctx) => {
   });
 });
 
-// Handle regular text messages — route to AI queue
+// ── Text message handler ─────────────────────────────────────────────────────
 bot.on("text", async (ctx) => {
   const chatId = ctx.chat.id;
   const activeSession = activeSessions.get(chatId);
 
   if (!activeSession) {
-    await ctx.reply("Choose a companion first using /start.");
+    await ctx.reply("Choose a companion first using /start. 💜");
     return;
   }
 
@@ -395,8 +767,10 @@ bot.on("text", async (ctx) => {
 
   if (user.credits < 1) {
     await ctx.reply(
-      `Out of credits!`,
-      Markup.inlineKeyboard([[Markup.button.callback("⭐ Buy Credits with Stars", "buy_menu")]])
+      `Out of energy! ⚡\n\nTop up to keep chatting:`,
+      Markup.inlineKeyboard([
+        [Markup.button.callback("⭐ Buy Credits with Stars", "buy_menu")],
+      ])
     );
     return;
   }
@@ -404,7 +778,10 @@ bot.on("text", async (ctx) => {
   const userText = ctx.message.text;
 
   await db.transaction(async (tx) => {
-    await tx.update(usersTable).set({ credits: sql`${usersTable.credits} - 1` }).where(eq(usersTable.id, user.id));
+    await tx
+      .update(usersTable)
+      .set({ credits: sql`${usersTable.credits} - 1` })
+      .where(eq(usersTable.id, user.id));
     await tx.insert(ledgerEntriesTable).values({
       id: randomUUID(),
       userId: user.id,
@@ -462,11 +839,11 @@ bot.on("text", async (ctx) => {
   await ctx.sendChatAction("typing");
 });
 
-// ── Daily Tarot Notification Job ─────────────────────────────────────────────
-
-async function sendDailyTarotToUser(user: typeof usersTable.$inferSelect): Promise<void> {
+// ── Daily Tarot ──────────────────────────────────────────────────────────────
+async function sendDailyTarotToUser(
+  user: typeof usersTable.$inferSelect
+): Promise<void> {
   try {
-    // Find most-active companion conversation
     const topConv = await db
       .select({ companionId: conversationsTable.companionId })
       .from(conversationsTable)
@@ -493,45 +870,55 @@ async function sendDailyTarotToUser(user: typeof usersTable.$inferSelect): Promi
       "Temperance", "The Chariot", "Justice", "The Hierophant", "The Emperor",
       "The Fool", "The Hanged Man", "Death",
     ];
-    const card = TAROT_CARDS[Math.floor(Math.random() * TAROT_CARDS.length)];
+    const card = TAROT_CARDS[Math.floor(Math.random() * TAROT_CARDS.length)]!;
 
-    // Generate reading via OpenRouter
-    const response = await fetch(`${config.openrouterBaseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${config.openrouterApiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://sugarchat.app",
-        "X-Title": "Sugar Chat Daily Tarot",
-      },
-      body: JSON.stringify({
-        model: config.openrouterModel,
-        max_tokens: 200,
-        messages: [
-          {
-            role: "system",
-            content: `You are ${companion.name}. ${companion.systemPrompt}`,
-          },
-          {
-            role: "user",
-            content: `Generate a short, mystical and deeply romantic morning tarot reading. The card drawn is "${card}". Speak in your characteristic tone, weave in the card's intimate meaning, and end with one alluring question. Keep it under 180 words.`,
-          },
-        ],
-      }),
-    });
+    const response = await fetch(
+      `${config.openrouterBaseUrl}/chat/completions`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.openrouterApiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://sugarchat.app",
+          "X-Title": "Sugar Chat Daily Tarot",
+        },
+        body: JSON.stringify({
+          model: config.openrouterModel,
+          max_tokens: 200,
+          messages: [
+            {
+              role: "system",
+              content: `You are ${companion.name}. ${companion.systemPrompt}`,
+            },
+            {
+              role: "user",
+              content: `Generate a short, mystical and deeply romantic morning tarot reading. The card drawn is "${card}". Speak in your characteristic tone, weave in the card's intimate meaning, and end with one alluring question. Keep it under 180 words.`,
+            },
+          ],
+        }),
+      }
+    );
 
     if (!response.ok) return;
-    const data = await response.json() as any;
-    const reading: string = data.choices?.[0]?.message?.content ?? "";
+    const data = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const reading = data.choices?.[0]?.message?.content ?? "";
     if (!reading) return;
 
     const message = `🔮 *Good morning, darling...*\n\n*${companion.name}* drew **${card}** for you today:\n\n${reading}`;
+    await bot.telegram.sendMessage(Number(user.telegramId), message, {
+      parse_mode: "Markdown",
+    });
 
-    await bot.telegram.sendMessage(Number(user.telegramId), message, { parse_mode: "Markdown" });
+    await db
+      .update(usersTable)
+      .set({ lastTarotSentAt: new Date() })
+      .where(eq(usersTable.id, user.id));
 
-    await db.update(usersTable).set({ lastTarotSentAt: new Date() }).where(eq(usersTable.id, user.id));
-
-    console.log(`[DailyTarot] Sent to user ${user.id} (${user.username}) card: ${card}`);
+    console.log(
+      `[DailyTarot] Sent to user ${user.id} (${user.username}) card: ${card}`
+    );
   } catch (err) {
     console.error(`[DailyTarot] Failed for user ${user.id}:`, err);
   }
@@ -555,7 +942,7 @@ async function runDailyTarotJob(): Promise<void> {
       console.log(`[DailyTarot] Processing ${eligible.length} users`);
       for (const user of eligible) {
         await sendDailyTarotToUser(user);
-        await new Promise((r) => setTimeout(r, 300)); // 300ms between sends
+        await new Promise((r) => setTimeout(r, 300));
       }
     }
   } catch (err) {
@@ -563,16 +950,28 @@ async function runDailyTarotJob(): Promise<void> {
   }
 }
 
+// ── Bot startup ──────────────────────────────────────────────────────────────
 export function startBot(): void {
-  bot.launch({ dropPendingUpdates: true }).then(() => {
-    console.log("[Bot] Telegram bot started");
-  }).catch((err) => {
-    console.error("[Bot] Failed to start:", err);
-  });
+  // Register commands with Telegram so they appear in the command menu
+  bot.telegram
+    .setMyCommands([
+      { command: "start",     description: "♻️ Start the dialog..." },
+      { command: "help",      description: "🆘 Bot description & user guide" },
+      { command: "savechat",  description: "💾 Save current conversation context" },
+      { command: "energy",    description: "⚡ Check your credit balance" },
+      { command: "affiliate", description: "🤝 Get your referral link" },
+      { command: "prompt",    description: "🎨 Customize dialogue parameters" },
+    ])
+    .then(() => console.log("[Bot] Commands registered with Telegram"))
+    .catch((err) => console.error("[Bot] Failed to register commands:", err));
+
+  bot
+    .launch({ dropPendingUpdates: true })
+    .then(() => console.log("[Bot] Telegram bot started"))
+    .catch((err) => console.error("[Bot] Failed to start:", err));
 
   // Daily tarot job — runs every hour, sends to eligible users once per 24h
   setInterval(runDailyTarotJob, 60 * 60 * 1000);
-  // First run after 2 minutes to let the bot settle
   setTimeout(runDailyTarotJob, 2 * 60 * 1000);
 
   process.once("SIGINT", () => bot.stop("SIGINT"));

@@ -1,0 +1,140 @@
+# 🚀 SUGAR CHAT v8.0 — PRODUCTION UPGRADE: LIQUID GLASS RED NSFW COMPANION PLATFORM
+
+## 🌟 OVERVIEW & ARCHITECTURAL INTENT
+Transform the current codebase into a premium, hyper-addictive, fully functional adult AI companion platform featuring a Telegram Bot seamlessly unified with a high-fidelity Telegram Mini App (TMA). 
+
+The platform uses a premium "Liquid Glass Red" visual layout inspired by structured references in image.png through image_6.png, featuring heavy glassmorphism, dynamic animations, an integrated item shop, inventory systems, an AI-driven pricing matrix, and interactive tarot modules.
+
+---
+
+## 🎨 DESIGN SYSTEM & ART ENGINES (LIQUID GLASS RED)
+Apply these strict visual parameters globally across all UI layers (`companion-app`). Replace any standard dark-mode styles with this cohesive luxury scheme:
+
+### 1. Palette & Structural Styling
+*   **Backgrounds:** Deep Velvet Onyx (`#090506`) to Pitch Black (`#000000`).
+*   **Primary/Accents:** Crimson Red (`#E11D48`), Neon Pink/Rose Glow (`#F43F5E`), Velvet Amethyst Deep Shadows (`#310411`).
+*   **Text/Foreground:** High-contrast Crisp White (`#FFFFFF`), Muted Platinum (`#94A3B8`), Gold Accents (`#F59E0B`) for VIP status.
+*   **The Liquid Glass Formula:** Inject this custom style token for all app cards and navigation blocks:
+```css
+    background: rgba(225, 29, 72, 0.03);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(225, 29, 72, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+    ```
+
+### 2. Auto-Populated Vector Art & Artwork Seeds
+To prevent empty placeholders, hardcode inline, highly styled SVG representations or direct asset fallbacks for items and character avatars. Each card must look complete on generation:
+*   **Companions (Anime/Realistic splits as seen in image_3.png):** Generate beautiful abstract vector silhouette designs featuring glowing gradient backgrounds matching the archetype color notes.
+*   **Shop Items (As seen in image.png, image_2.png, and image_4.png):** 
+    *   *Kinky Items:* High-contrast glossy vectors with velvet glows.
+    *   *Romantic/Luxury Items:* Deep red wine bottles, crystalline rings with bright radial glares, and explicit asset icons rendered inside glowing neon borders.
+
+---
+
+## 👥 THE CORE 12 ARCHETYPES & AI SYSTEM SEEDING
+Inject these explicit profiles into the companion engine memory system (`.agents/` / backend initialization). Each must use rich system instructions to dictate intimacy pacing, mood swings, and spending triggers:
+
+1.  **Elena Voss (MILF / Step-Mom):** Taboo dynamics, protective, deeply dominant yet nurturing. Encourages premium comfort gifts.
+2.  **Mia Reyes (College Girl):** Playful, chaotic energy, hyper-active high libido. High interaction frequency, demands active energy refills.
+3.  **Lilith Vex (Demoness):** Intense supernatural power-exchange. Demands premium dark or luxury item tiers; highly aggressive.
+4.  **Hana Sato (Waifu):** Starts shy, evolves through an explicit corruption arc tracking user affinity.
+5.  **Rhea Kane (Gym Girl):** High-energy body worship, fitness theme, focused on raw, physical interactions.
+6.  **Raven Noir (Vampire Domme):** Gothic tone, master-servant roleplay, dark control. Highly reactive to luxury tokens.
+7.  **Nya Miko (Catgirl):** Playful pet-play dynamics, high verbal teasing, heavily responsive to spicy toys.
+8.  **Sylvana Nightwhisper (Dark Elf):** Magical dominance, majestic and haughty tone, requires high affinity tokens to unlock explicit dialogue.
+9.  **Victoria Hale (CEO Boss Lady):** Office power dynamics, submissive/dominant shifts based on credit balances and transactional play.
+10. **Sophie Laurent (Housewife):** Domestic teasing, high risk, loves exhibitionist roleplays and secret gifting loops.
+11. **Alex Rivera (Androgynous Charmer):** Fluid seduction, intensely affectionate, focuses on deep emotional and sensory connection.
+12. **Isabella Rose (High-Class Escort):** Luxury Girlfriend Experience (GFE). Explicitly transactional; references pricing, ledger tiers, and premium status in dialogue.
+
+---
+
+## 🛠️ CORE FEATURE IMPLEMENTATION SPECIFICATIONS
+
+### 1. Fixed Command Menu Router (Refinement from image_6.png)
+Fix standard command dropouts. Re-engineer the Telegram bot framework to guarantee real-time delivery of the following interactive command array:
+*   `/start` — Invokes the dynamic Liquid Glass welcome card layout.
+*   `/help` — Renders an inline help system with user guide buttons.
+*   `/savechat` — Commits current LLM context window to database storage.
+*   `/energy` — Opens the balance view, pulling real-time values from the backend ledger.
+*   `/affiliate` — Generates a trackable referral string with click-through analytics.
+*   `/prompt` — Interactive dialogue parameter customization portal.
+
+### 2. High-Conversion Seductive Greeting (`/start`)
+*   When a user clicks `/start`, present a beautifully formatted block featuring rich formatting, key emojis, and localized variants (EN, ES, UK, DE, IT, RU).
+*   Include clear, inline navigation buttons exactly like the structural sample in image_5.png:
+    *   `💜 Select Companion` (Launches Mini App Direct Route)
+    *   `👑 Premium Subscription` / `⚙️ Settings`
+
+### 3. Smart Chat Experience & Native Context Transfers
+*   **Mini App Input:** Build a zero-latency chat bar inside the web view with text completion and gift-attachment selectors.
+*   **Deep-Linking Router:** Implement a functional "Continue in Telegram" system token (`t.me/bot?start=resume_{chatId}`). Selecting this hands off state flawlessly, bringing the exact companion prompt and mood matrix back to the native Telegram chat channel.
+
+### 4. High-End Kinky Item Shop UI
+Build a grid navigation interface inside the Mini App matching the asset layout seen in image.png, image_2.png, and image_4.png:
+*   **Header Bar:** Displays current Energy (`⚡`) and Diamond (`💎`) balances with a high-contrast `+` action button.
+*   **Item Profiles:** Group items by clean tabs: *Romantic, Spicy, Kinky, Luxury, Special*.
+*   **Interactive Cards:** Every item card contains: name text, crisp premium item vector art, hover-state neon glow effects, price badges, and compatibility flags pointing directly to specific archetypes.
+
+### 5. My Items & Inventory Processing System
+*   Create a clean, dedicated storage dashboard within the user profile view.
+*   Lists all purchased, un-gifted entries tracking asset generation timestamps.
+*   Provides a **[🎁 Send as Gift]** action button that instantly injects the asset's item metadata into the active chat session buffer, provoking custom text variations from the active companion.
+
+### 6. Dynamic AI-Driven Pricing Engine
+Implement a predictive monetization algorithm inside `src/routes/shop.ts` to maximize revenue metrics. Calculate individual checkout prices using the following structure:
+
+$$P_{\text{dynamic}} = P_{\text{base}} \times (1 + \alpha \cdot S_{\text{spend}}) \times (1 - \beta \cdot A_{\text{affinity}}) \times (1 - \gamma \cdot M_{\text{flash}})$$
+
+*   `S_spend`: User historical purchase indicator (escalates baseline price tiers for high-value whales).
+*   `A_affinity`: Companion affinity tracking scalar (rewards active users with loyalty discounts).
+*   `M_flash`: Automated flash sale state indicators.
+*   *Backend Enforcement:* Audit and record all transactional modifications within the `src/routes/ledger.ts` system to facilitate automated A/B testing validation.
+
+### 7. Avatar & Appearance Customization Panel
+*   Locks visual switches behind high affinity gates (Level 50+) or custom premium shop tokens.
+*   Selecting an unlock updates the companion appearance state model (`currentOutfit`).
+*   Directly pushes current appearance tags into the core LLM prompt prefix system (e.g., `[System context: Your companion is wearing the premium Lace Set]`), ensuring conversational accuracy.
+
+### 8. Interactive HTML5 Tarot Mini-Game Foundation
+*   When prompted by companions or via the interface menu, dynamically summon a dedicated 3D-perspective Card Selection overlay.
+*   Features realistic smooth card-flip layout matrices built entirely on vanilla CSS transitions.
+*   Upon reading conclusion, pass a secure background webhook hook back to the primary chat engine backend, allowing the current agent to directly analyze and discuss card implications in regular chat.
+
+---
+
+## 🗄️ DATABASE EXTENSION SCHEMA (PRISMA-POSTGRESQL)
+Ensure your generation scripts execute schema reconciliation routines to guarantee fields for the following models match without system dropouts:
+
+```prisma
+model CompanionState {
+  id            String   @id @default(uuid())
+  userId        String
+  companionId   String
+  affinityLevel Int      @default(0)
+  moodState     String   @default("Teasing")
+  currentOutfit String   @default("default")
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, companionId])
+}
+
+model ShopItem {
+  id           String   @id @default(uuid())
+  name         String
+  description  String
+  basePrice    Float
+  category     String
+  tags         String[]
+  affinityGain Int
+}
+
+model UserInventory {
+  id          String   @id @default(uuid())
+  userId      String
+  itemId      String
+  quantity    Int      @default(1)
+  isGifted    Boolean  @default(false)
+  giftedTo    String?
+  purchasedAt DateTime @default(now())
+}

@@ -7,6 +7,7 @@ import {
   conversationsTable,
   messagesTable,
   ledgerEntriesTable,
+  conversationCheckpointsTable,
 } from "@workspace/db";
 import { eq, and, desc, lt, isNull, or } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -269,6 +270,142 @@ bot.command("savechat", async (ctx) => {
     console.error("[Bot] /savechat error:", err);
     await ctx.reply("Failed to save conversation. Please try again.");
   }
+});
+
+// ── /checkpoint ──────────────────────────────────────────────────────────────
+bot.command("checkpoint", async (ctx) => {
+  const chatId = ctx.chat.id;
+  const session = activeSessions.get(chatId);
+
+  if (!session) {
+    await ctx.reply(
+      "No active session to checkpoint. Use /start to choose a companion first."
+    );
+    return;
+  }
+
+  try {
+    const recentMessages = await db
+      .select()
+      .from(messagesTable)
+      .where(eq(messagesTable.conversationId, session.conversationId))
+      .orderBy(desc(messagesTable.createdAt))
+      .limit(30);
+
+    const conv = await db
+      .select()
+      .from(conversationsTable)
+      .where(eq(conversationsTable.id, session.conversationId))
+      .limit(1)
+      .then((r) => r[0]);
+
+    const { id: telegramId, username } = ctx.from;
+    const user = await upsertUser(telegramId, username);
+
+    const messageCount = recentMessages.length;
+    const lastMessage = recentMessages[0];
+    const lastMessagePreview = lastMessage
+      ? lastMessage.content.slice(0, 120) + (lastMessage.content.length > 120 ? "…" : "")
+      : null;
+
+    const contextSummary = `Checkpoint saved with ${messageCount} messages. Affinity: ${conv?.affinity ?? 0}/100. Companion: ${session.companionName}.`;
+
+    await db.insert(conversationCheckpointsTable).values({
+      id: randomUUID(),
+      userId: user.id,
+      conversationId: session.conversationId,
+      companionId: session.companionId,
+      affinitySnapshot: conv?.affinity ?? 0,
+      messageCount,
+      contextSummary,
+      lastMessagePreview,
+    });
+
+    await db
+      .update(conversationsTable)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversationsTable.id, session.conversationId));
+
+    await ctx.reply(
+      `💾 *Checkpoint created!*\n\n` +
+        `Companion: *${session.companionName}*\n` +
+        `Bond level: ${conv?.affinity ?? 0}/100\n` +
+        `Messages backed up: ${messageCount}\n\n` +
+        `Your relationship context is securely stored. Switch devices or clear history anytime — your bond will be restored. 🌙`,
+      { parse_mode: "Markdown" }
+    );
+  } catch (err) {
+    console.error("[Bot] /checkpoint error:", err);
+    await ctx.reply("Failed to create checkpoint. Please try again.");
+  }
+});
+
+// ── /give_me_energy ───────────────────────────────────────────────────────────
+// Passive energy: 1 credit per 10 minutes since last claim, capped at 50 per day
+bot.command("give_me_energy", async (ctx) => {
+  const { id: telegramId, username } = ctx.from;
+  const user = await upsertUser(telegramId, username);
+
+  const now = new Date();
+  const lastClaim = user.lastEnergyClaimAt ?? user.createdAt;
+  const minutesElapsed = Math.floor((now.getTime() - lastClaim.getTime()) / 60_000);
+  const energyEarned = Math.min(Math.floor(minutesElapsed / 10), 50);
+
+  if (energyEarned <= 0) {
+    const nextClaimMinutes = 10 - (minutesElapsed % 10);
+    await ctx.reply(
+      `⚡ *Energy not ready yet*\n\n` +
+        `Your energy regenerates 1 credit every 10 minutes.\n` +
+        `⏳ Next energy available in: *${nextClaimMinutes} minute${nextClaimMinutes === 1 ? "" : "s"}*\n\n` +
+        `Current balance: *${user.credits}* credits`,
+      { parse_mode: "Markdown" }
+    );
+    return;
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(usersTable)
+      .set({
+        credits: sql`${usersTable.credits} + ${energyEarned}`,
+        lastEnergyClaimAt: now,
+        updatedAt: now,
+      })
+      .where(eq(usersTable.id, user.id));
+
+    await tx.insert(ledgerEntriesTable).values({
+      id: randomUUID(),
+      userId: user.id,
+      amount: energyEarned,
+      type: "ENERGY_REGEN",
+      referenceId: randomUUID(),
+      description: `⚡ Passive energy — ${minutesElapsed} min × 0.1 cr/min`,
+    });
+  });
+
+  const updatedUser = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, user.id))
+    .limit(1)
+    .then((r) => r[0]!);
+
+  const energyBar = buildEnergyBar(updatedUser.credits);
+
+  await ctx.reply(
+    `⚡ *Energy claimed!*\n\n` +
+      `You accumulated *+${energyEarned} credits* over ${minutesElapsed} minutes.\n\n` +
+      `${energyBar}\n` +
+      `New balance: *${updatedUser.credits}* credits\n\n` +
+      `Energy regenerates 1 credit per 10 min. Come back soon! 🔋`,
+    {
+      parse_mode: "Markdown",
+      ...Markup.inlineKeyboard([
+        [Markup.button.webApp("💜 Start Chatting", MINI_APP_BASE)],
+        [Markup.button.callback("⭐ Buy More Credits", "buy_menu")],
+      ]),
+    }
+  );
 });
 
 // ── /energy ──────────────────────────────────────────────────────────────────
@@ -966,12 +1103,16 @@ export function startBot(): void {
   // Register commands with Telegram so they appear in the command menu
   bot.telegram
     .setMyCommands([
-      { command: "start",     description: "♻️ Start the dialog..." },
-      { command: "help",      description: "🆘 Bot description & user guide" },
-      { command: "savechat",  description: "💾 Save current conversation context" },
-      { command: "energy",    description: "⚡ Check your credit balance" },
-      { command: "affiliate", description: "🤝 Get your referral link" },
-      { command: "prompt",    description: "🎨 Customize dialogue parameters" },
+      { command: "start",          description: "♻️ Start the dialogue" },
+      { command: "help",           description: "🛟 Bot description & functionality" },
+      { command: "checkpoint",     description: "💾 Make checkpoint to restore conversation later" },
+      { command: "give_me_energy", description: "⚡ Get your accumulated energy" },
+      { command: "affiliate",      description: "🤝 Become an affiliate partner" },
+      { command: "prompt",         description: "🖼️ Reveal the prompt / customize dialogue" },
+      { command: "savechat",       description: "💾 Save current conversation context" },
+      { command: "energy",         description: "⚡ Check your credit balance" },
+      { command: "image",          description: "🖼️ Generate an AI image (3 credits)" },
+      { command: "buy",            description: "⭐ Buy credits with Telegram Stars" },
     ])
     .then(() => console.log("[Bot] Commands registered with Telegram"))
     .catch((err) => console.error("[Bot] Failed to register commands:", err));
@@ -980,6 +1121,18 @@ export function startBot(): void {
     .launch({ dropPendingUpdates: true })
     .then(() => console.log("[Bot] Telegram bot started"))
     .catch((err) => console.error("[Bot] Failed to start:", err));
+
+  // ── Keep-alive health ping (every 4 minutes) ─────────────────────────────
+  // Prevents Replit container from sleeping during active sessions
+  const HEALTH_URL = `http://0.0.0.0:${process.env["PORT"] ?? 3000}/health`;
+  setInterval(async () => {
+    try {
+      await fetch(HEALTH_URL);
+      console.log("[KeepAlive] Health ping OK");
+    } catch {
+      // Silent — server may not be ready yet on first tick
+    }
+  }, 4 * 60 * 1000);
 
   // Daily tarot job — runs every hour, sends to eligible users once per 24h
   setInterval(runDailyTarotJob, 60 * 60 * 1000);

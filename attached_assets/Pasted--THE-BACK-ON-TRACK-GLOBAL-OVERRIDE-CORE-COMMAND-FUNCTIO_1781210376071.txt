@@ -1,0 +1,49 @@
+# ⚡️ THE BACK-ON-TRACK GLOBAL OVERRIDE: CORE COMMAND FUNCTIONALITY, CRASH REPAIR, & ALL PHASES
+
+We are back in the correct project workspace. Proceed immediately with the complete, uninterrupted execution of all remaining phases, routing structures, and critical runtime crash fixes. Do not write placeholders, do not use truncated code strings, and do not stop for step-by-step authorization.
+
+---
+
+## 🛠️ PART 1: BOT COMMAND INTENT IMPLEMENTATION (image_11.png SPEC)
+
+The visual layout menu is fully managed via BotFather. Build out production-grade, explicit backend listeners within the bot event engine workspace (`artifacts/api-server/src/bot/`) to listen for and execute these exact 6 operational intents:
+
+1. **`/start` ♻️ Start the dialogue**
+   * Clear any stale short-term conversation context flags from the session database.
+   * Send a premium, localized Liquid Glass Red introduction welcome card with inline buttons linking straight to the companion selection interface and subscription pages.
+
+2. **`/help` 🛟 Bot description & functionality**
+   * Reply with an elegant, scannable guide explaining the platform mechanics: intimacy milestones, energy rules, how the item shop works, and premium VIP benefits.
+
+3. **`/checkpoint` 💾 Make checkpoint to restore conversation later**
+   * Export the current LLM context window, active mood state, and conversation arrays.
+   * Write them explicitly to a secure long-term backup table (`ConversationCheckpoint`) so the exact relationship context can be re-hydrated if the user switches devices or purges their history.
+
+4. **`/give_me_energy` ⚡ Get your accumulated energy**
+   * Check the user's real-time accumulated time-based passive energy generation state in the ledger database.
+   * Update their live currency row and trigger a beautiful confirmation response showing their total replenished balance.
+
+5. **`/affiliate` 🤝 Become an affiliate partner**
+   * Generate or retrieve a uniquely trackable referral URL (`t.me/YourBot?start=ref_${userId}`).
+   * Render an interactive affiliate statistics summary card showing total invited users, accumulated credits earned, and a button to claim payout rewards.
+
+6. **`/prompt` 🖼️ Reveal the prompt of an image**
+   * Check if this is sent as a reply to a previous bot-generated image payload.
+   * Pull the underlying generation parameters directly from `src/queues/image-queue.ts` history metadata and cleanly print the descriptive prompt parameters in text format.
+
+*Runtime Stability Core:* Retain the long-polling architecture, but add an internal 4-minute background ping task hitting the backend `/health` endpoint to guarantee Replit never puts the runtime container to sleep.
+*Sandbox Bypass:* Inside `telegram-auth.ts`, ensure that if the app is accessed from a Replit development preview subdomain window (`.replit.app` or `.replit.dev`), it cleanly generates a mock valid session instead of hanging or returning a `403 Unauthorized` error to the frontend interface.
+
+---
+
+## 🔴 PART 2: THE FRONTEND `.toFixed` APPCRASH ELIMINATION (image_9.png FIX)
+
+The frontend interface is currently broken due to an object validation crash: `undefined is not an object (evaluating 'm.priorityMultiplier.toFixed')`.
+
+1. **Backend Route Sanitization:** Open `artifacts/api-server/src/routes/shop.ts` and any dynamic pricing files. Ensure every object property returned by the database or mathematical calculator enforces safe fallback defaults:
+```typescript
+   // Force runtime numerical security defaults
+   priorityMultiplier: m.priorityMultiplier !== undefined && m.priorityMultiplier !== null ? Number(m.priorityMultiplier) : 1.0,
+   spendMultiplier: m.spendMultiplier ?? 1.0,
+   affinityDiscount: m.affinityDiscount ?? 0.0,
+   flashSaleApplied: m.flashSaleApplied ?? false

@@ -83,7 +83,7 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("dashboard.bonus_priority")}</p>
-                    <p className="text-lg font-bold text-foreground">{bonuses.priorityMultiplier.toFixed(2)}x</p>
+                    <p className="text-lg font-bold text-foreground">{((bonuses?.priorityMultiplier ?? 1.0)).toFixed(2)}x</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">

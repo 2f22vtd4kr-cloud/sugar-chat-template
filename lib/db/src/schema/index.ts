@@ -18,6 +18,7 @@ export const usersTable = pgTable("users", {
   dailyTarotEnabled: boolean("daily_tarot_enabled").notNull().default(true),
   lastTarotSentAt: timestamp("last_tarot_sent_at"),
   totalSpent: integer("total_spent").notNull().default(0),
+  lastEnergyClaimAt: timestamp("last_energy_claim_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -139,6 +140,20 @@ export const flashSalesTable = pgTable("flash_sales", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ── Conversation Checkpoints (💾 /checkpoint command) ────────────────────────
+
+export const conversationCheckpointsTable = pgTable("conversation_checkpoints", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  conversationId: text("conversation_id").notNull().references(() => conversationsTable.id, { onDelete: "cascade" }),
+  companionId: text("companion_id").notNull().references(() => companionsTable.id, { onDelete: "cascade" }),
+  affinitySnapshot: integer("affinity_snapshot").notNull().default(0),
+  messageCount: integer("message_count").notNull().default(0),
+  contextSummary: text("context_summary"),
+  lastMessagePreview: text("last_message_preview"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // ── Zod insert schemas ────────────────────────────────────────────────────────
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({ createdAt: true, updatedAt: true });
@@ -152,6 +167,7 @@ export const insertTarotReadingSchema = createInsertSchema(tarotReadingsTable).o
 export const insertShopInventorySchema = createInsertSchema(shopInventoryTable).omit({ createdAt: true });
 export const insertAbandonedCheckoutSchema = createInsertSchema(abandonedCheckoutsTable).omit({ createdAt: true });
 export const insertFlashSaleSchema = createInsertSchema(flashSalesTable).omit({ createdAt: true });
+export const insertConversationCheckpointSchema = createInsertSchema(conversationCheckpointsTable).omit({ createdAt: true });
 
 // ── TypeScript types ──────────────────────────────────────────────────────────
 
@@ -166,6 +182,7 @@ export type TarotReading = typeof tarotReadingsTable.$inferSelect;
 export type ShopInventory = typeof shopInventoryTable.$inferSelect;
 export type AbandonedCheckout = typeof abandonedCheckoutsTable.$inferSelect;
 export type FlashSale = typeof flashSalesTable.$inferSelect;
+export type ConversationCheckpoint = typeof conversationCheckpointsTable.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertCompanion = z.infer<typeof insertCompanionSchema>;

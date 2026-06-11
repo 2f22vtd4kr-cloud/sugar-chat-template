@@ -11,11 +11,25 @@ import { User, Globe, Sparkles, Shield, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+
+interface BonusSummary {
+  hasPremiumAccess: boolean;
+  isTelegramPremium: boolean;
+  extraEnergyPerDay: number;
+  priorityMultiplier: number;
+  dailyImageCredits: number;
+  badgeLabel: string;
+}
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { isPremium, haptic } = useTelegram();
   const { data: user, isLoading } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
+  const { data: bonuses } = useQuery<BonusSummary>({
+    queryKey: ["users", "bonuses"],
+    queryFn: () => fetch(`${import.meta.env.BASE_URL}api/users/me/bonuses`).then((r) => r.json()),
+  });
   const qc = useQueryClient();
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
@@ -98,6 +112,35 @@ export default function Settings() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {bonuses && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+            <Card className="glass-card rounded-2xl overflow-hidden border-0">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary">{t("settings.bonus_title")}</p>
+                    <h2 className="font-serif text-lg text-foreground">
+                      {bonuses.hasPremiumAccess ? bonuses.badgeLabel : t("settings.bonus_standard")}
+                    </h2>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("settings.bonus_priority")}</p>
+                    <p className="text-lg font-bold text-foreground">{bonuses.priorityMultiplier.toFixed(2)}x</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+                  <span className="rounded-xl border border-red-500/20 bg-red-500/10 px-2.5 py-2">
+                    {t("settings.bonus_energy", { count: bonuses.extraEnergyPerDay })}
+                  </span>
+                  <span className="rounded-xl border border-red-500/20 bg-red-500/10 px-2.5 py-2">
+                    {t("settings.bonus_images", { count: bonuses.dailyImageCredits })}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Language selector */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>

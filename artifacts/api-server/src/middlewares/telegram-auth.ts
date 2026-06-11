@@ -10,6 +10,7 @@ declare global {
     interface Request {
       telegramUser?: TelegramUser;
       dbUserId?: string;
+      telegramPremium?: boolean;
     }
   }
 }
@@ -105,5 +106,6 @@ export async function requireTelegramAuth(
 
   req.telegramUser = telegramUser;
   req.dbUserId = user!.id;
+  req.telegramPremium = isPremium;
   next();
 }

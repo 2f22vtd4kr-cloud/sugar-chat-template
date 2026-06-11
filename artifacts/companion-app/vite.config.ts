@@ -26,6 +26,10 @@ if (!basePath) {
   );
 }
 
+if (!basePath.startsWith("/")) {
+  throw new Error(`Invalid BASE_PATH value: "${basePath}". It must start with "/".`);
+}
+
 export default defineConfig({
   base: basePath,
   plugins: [

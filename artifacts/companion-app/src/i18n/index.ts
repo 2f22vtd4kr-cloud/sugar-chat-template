@@ -25,6 +25,10 @@ i18n
     resources: { en: { translation: en }, es: { translation: es }, ru: { translation: ru }, de: { translation: de }, it: { translation: it }, uk: { translation: uk } },
     fallbackLng: "en",
     interpolation: { escapeValue: false },
+    returnNull: false,
+    missingKeyHandler: (lngs, ns, key) => {
+      console.warn(`[i18n] Missing translation key: ${ns}.${key} (${lngs.join(", ")})`);
+    },
     detection: {
       order: ["localStorage", "navigator"],
       caches: ["localStorage"],

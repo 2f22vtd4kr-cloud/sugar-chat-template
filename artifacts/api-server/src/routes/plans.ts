@@ -98,6 +98,11 @@ export async function activateSubscription(userId: string, planId: string, payme
       status: "active",
     });
 
+    await tx
+      .update(usersTable)
+      .set({ isTelegramPremium: true, updatedAt: now })
+      .where(eq(usersTable.id, userId));
+
     await tx.insert(ledgerEntriesTable).values({
       id: randomUUID(),
       userId,

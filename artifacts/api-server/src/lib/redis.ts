@@ -1,4 +1,4 @@
-import { Redis } from "ioredis";
+import Redis from "ioredis";
 import { config } from "./config.js";
 
 /**
@@ -6,7 +6,7 @@ import { config } from "./config.js";
  * ioredis natively parses rediss:// and enables TLS automatically —
  * no manual host/port/tls parsing needed.
  */
-export const createRedisConnection = (): Redis => {
+export const createRedisConnection = (): any => {
   const redis = new Redis(config.redisUrl, {
     maxRetriesPerRequest: null, // required by BullMQ workers
     enableReadyCheck: false,

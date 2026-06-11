@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireTelegramAuth } from "../middlewares/telegram-auth.js";
-import { db, usersTable, messagesTable, conversationsTable, companionsTable, ledgerEntriesTable } from "@workspace/db";
-import { eq, sum, count } from "drizzle-orm";
+import { db, usersTable, messagesTable, conversationsTable, companionsTable, ledgerEntriesTable, subscriptionsTable } from "@workspace/db";
+import { eq, sum, count, and, gte } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 const router = Router();
@@ -46,9 +46,59 @@ router.patch("/me", requireTelegramAuth, async (req, res) => {
   const updates: Partial<typeof usersTable.$inferInsert> & { updatedAt?: Date } = { updatedAt: new Date() };
   if (typeof adultConfirmed === "boolean") updates.adultConfirmed = adultConfirmed;
   if (language && allowed.includes(language)) updates.language = language;
+  if (typeof req.telegramPremium === "boolean") updates.isTelegramPremium = req.telegramPremium;
   await db.update(usersTable).set(updates).where(eq(usersTable.id, req.dbUserId!));
   const user = await db.select().from(usersTable).where(eq(usersTable.id, req.dbUserId!)).limit(1).then((r) => r[0]!);
   res.json(serializeUser(user));
+});
+
+// GET /api/users/me/bonuses
+router.get("/me/bonuses", requireTelegramAuth, async (req, res) => {
+  const userId = req.dbUserId!;
+  const user = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1).then((r) => r[0]);
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+  const activeSubscription = await db
+    .select()
+    .from(subscriptionsTable)
+    .where(
+      and(
+        eq(subscriptionsTable.userId, userId),
+        eq(subscriptionsTable.status, "active"),
+        gte(subscriptionsTable.expiresAt, new Date())
+      )
+    )
+    .orderBy(subscriptionsTable.expiresAt)
+    .limit(1)
+    .then((rows) => rows[0] ?? null);
+
+  const hasPremiumAccess = user.isTelegramPremium || activeSubscription !== null;
+  const perks = hasPremiumAccess
+    ? {
+        extraEnergyPerDay: 3,
+        priorityMultiplier: 1.25,
+        dailyImageCredits: 1,
+        badgeLabel: activeSubscription ? "VIP Subscriber" : "Telegram Premium",
+      }
+    : {
+        extraEnergyPerDay: 0,
+        priorityMultiplier: 1,
+        dailyImageCredits: 0,
+        badgeLabel: "Standard",
+      };
+
+  res.json({
+    hasPremiumAccess,
+    isTelegramPremium: user.isTelegramPremium,
+    activeSubscription: activeSubscription
+      ? {
+          id: activeSubscription.id,
+          planId: activeSubscription.planId,
+          expiresAt: activeSubscription.expiresAt.toISOString(),
+        }
+      : null,
+    ...perks,
+  });
 });
 
 // GET /api/users/me/streak

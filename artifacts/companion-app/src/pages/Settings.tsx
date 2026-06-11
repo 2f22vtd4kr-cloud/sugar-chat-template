@@ -220,7 +220,7 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        <p className="text-center text-[10px] text-muted-foreground">Sugar Chat · v7.0</p>
+        <p className="text-center text-[10px] text-muted-foreground">Sugar Chat · v7.1</p>
       </div>
     </AppLayout>
   );

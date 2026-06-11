@@ -1,4 +1,4 @@
-import { pgTable, text, integer, bigint, timestamp, uniqueIndex, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, bigint, timestamp, uniqueIndex, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -14,6 +14,7 @@ export const usersTable = pgTable("users", {
   isTelegramPremium: boolean("is_telegram_premium").notNull().default(false),
   streakDays: integer("streak_days").notNull().default(0),
   lastLoginDate: text("last_login_date"), // "YYYY-MM-DD"
+  birthDate: text("birth_date"), // "YYYY-MM-DD" — optional, for tarot astrology
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -83,6 +84,18 @@ export const giftsTable = pgTable("gifts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const tarotReadingsTable = pgTable("tarot_readings", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  companionId: text("companion_id").notNull().references(() => companionsTable.id, { onDelete: "cascade" }),
+  topic: text("topic").notNull(),
+  spreadType: text("spread_type").notNull().default("three_card"), // "three_card" | "five_card"
+  cards: jsonb("cards").notNull(), // array of { name, position, reversed, meaning }
+  readingText: text("reading_text").notNull(),
+  affinityGain: integer("affinity_gain").notNull().default(2),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(usersTable).omit({ createdAt: true, updatedAt: true });
 export const insertCompanionSchema = createInsertSchema(companionsTable);
 export const insertConversationSchema = createInsertSchema(conversationsTable).omit({ createdAt: true, updatedAt: true });
@@ -90,6 +103,7 @@ export const insertMessageSchema = createInsertSchema(messagesTable).omit({ crea
 export const insertLedgerEntrySchema = createInsertSchema(ledgerEntriesTable).omit({ createdAt: true });
 export const insertSubscriptionSchema = createInsertSchema(subscriptionsTable).omit({ createdAt: true });
 export const insertGiftSchema = createInsertSchema(giftsTable).omit({ createdAt: true });
+export const insertTarotReadingSchema = createInsertSchema(tarotReadingsTable).omit({ createdAt: true });
 
 export type User = typeof usersTable.$inferSelect;
 export type Companion = typeof companionsTable.$inferSelect;
@@ -98,6 +112,7 @@ export type Message = typeof messagesTable.$inferSelect;
 export type LedgerEntry = typeof ledgerEntriesTable.$inferSelect;
 export type Subscription = typeof subscriptionsTable.$inferSelect;
 export type Gift = typeof giftsTable.$inferSelect;
+export type TarotReading = typeof tarotReadingsTable.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertCompanion = z.infer<typeof insertCompanionSchema>;
@@ -106,3 +121,4 @@ export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertLedgerEntry = z.infer<typeof insertLedgerEntrySchema>;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type InsertGift = z.infer<typeof insertGiftSchema>;
+export type InsertTarotReading = z.infer<typeof insertTarotReadingSchema>;

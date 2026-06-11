@@ -3,7 +3,7 @@ import type { Message } from "@workspace/api-client-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, MessageSquare, ExternalLink, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Heart, MessageSquare, ExternalLink, Image as ImageIcon, Sparkles } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { useTelegram } from "@/context/TelegramContext";
@@ -254,15 +254,25 @@ export default function ConversationDetail({ companionId }: ConversationDetailPr
           />
         )}
 
-        {/* Continue button */}
-        <Button
-          onClick={handleContinueInBot}
-          className="w-full h-11 rounded-2xl font-semibold text-base gap-2"
-          style={{ background: "linear-gradient(135deg, hsl(348 76% 49%), hsl(351 88% 62%))", boxShadow: "0 0 24px rgba(225,29,72,0.3)" }}
-        >
-          <ExternalLink className="w-4 h-4" />
-          Continue in Telegram
-        </Button>
+        {/* Tarot + Continue buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => { haptic("medium"); navigate(`/tarot/${companionId}`); }}
+            className="flex items-center gap-1.5 px-3 h-11 rounded-2xl font-semibold text-sm shrink-0"
+            style={{ background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", color: "rgba(216,180,254,0.9)" }}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Tarot
+          </button>
+          <Button
+            onClick={handleContinueInBot}
+            className="flex-1 h-11 rounded-2xl font-semibold text-sm gap-2"
+            style={{ background: "linear-gradient(135deg, hsl(348 76% 49%), hsl(351 88% 62%))", boxShadow: "0 0 24px rgba(225,29,72,0.3)" }}
+          >
+            <ExternalLink className="w-4 h-4" />
+            Continue in Telegram
+          </Button>
+        </div>
 
         {messages.length > 0 && (
           <p className="text-[10px] text-muted-foreground/40 text-center -mt-1">

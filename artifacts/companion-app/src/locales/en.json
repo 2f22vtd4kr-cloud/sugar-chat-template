@@ -38,5 +38,19 @@
     "weekly_bonus": "Weekly Bonus! 🎉",
     "monthly_bonus": "Monthly Bonus! 🏆",
     "start": "Start your streak today"
+  },
+  "tarot": {
+    "title": "Tarot Reading",
+    "subtitle": "A mystical companion-led spread",
+    "choose_topic": "What shall we explore?",
+    "choose_desc": "Choose a topic and let the cards speak",
+    "loading": "Consulting the cards...",
+    "tap_reveal": "Tap to reveal",
+    "reading_label": "Reading",
+    "bond_gain": "+{{count}} bond",
+    "continue_with": "Continue with {{name}}",
+    "new_reading": "New Reading",
+    "history": "Past Readings",
+    "no_history": "No readings yet. Try your first spread."
   }
 }

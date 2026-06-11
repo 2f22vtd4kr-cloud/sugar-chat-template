@@ -1,18 +1,9 @@
 import { db, companionsTable } from "@workspace/db";
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { DEFAULT_COMPANIONS } from "./companion-catalog.js";
 
 export async function seedCompanions(): Promise<void> {
   for (const companion of DEFAULT_COMPANIONS) {
-    const namesToMatch = [companion.name, ...(companion.legacyNames ?? [])];
-
-    const existing = await db
-      .select()
-      .from(companionsTable)
-      .where(inArray(companionsTable.name, namesToMatch))
-      .limit(1)
-      .then((rows) => rows[0]);
-
     const values = {
       name: companion.name,
       avatarUrl: companion.avatarUrl,
@@ -24,13 +15,20 @@ export async function seedCompanions(): Promise<void> {
       tags: companion.tags,
     };
 
+    const existing = await db
+      .select()
+      .from(companionsTable)
+      .where(eq(companionsTable.id, companion.id))
+      .limit(1)
+      .then((rows) => rows[0]);
+
     if (existing) {
-      await db.update(companionsTable).set(values).where(eq(companionsTable.id, existing.id));
-      console.log(`[Seed] Updated companion: ${existing.name} → ${companion.name}`);
+      await db.update(companionsTable).set(values).where(eq(companionsTable.id, companion.id));
+      console.log(`[Seed] Updated companion: ${companion.name} (${companion.id})`);
       continue;
     }
 
     await db.insert(companionsTable).values({ id: companion.id, ...values });
-    console.log(`[Seed] Created companion: ${companion.name}`);
+    console.log(`[Seed] Created companion: ${companion.name} (${companion.id})`);
   }
 }

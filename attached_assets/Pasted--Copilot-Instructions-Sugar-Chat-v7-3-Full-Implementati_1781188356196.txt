@@ -1,0 +1,56 @@
+**Copilot Instructions – Sugar Chat v7.3 Full Implementation (Extended & Comprehensive)**
+We are continuing development on the current main branch of https://github.com/2f22vtd4kr-cloud/sugar-chat-template. The branch already includes Telegram Stars payments, gifts system, daily streaks, basic i18n, subscriptions, and an Explore page with only 3 placeholder characters (Sophia, Marcus, Elena). Our goal is to reach a polished v7.3 state with rich 12-archetype companions, Liquid Glass red design, complete i18n, NSFW safety features, Telegram Premium perks, strong gamification, and a major new Tarot Reading HTML5 Mini-Game plus astrology integration foundations.
+**Locked 12 Archetypes (replace all current placeholders immediately with these exact names and slugs):**
+ 1. **Elena Voss** — Confident MILF / Step-Mom (nurturing dominant taboo)
+ 2. **Mia Reyes** — Energetic College Girl (playful high-libido)
+ 3. **Lilith Vex** — Mysterious Demoness (supernatural power exchange)
+ 4. **Hana Sato** — Shy-to-Bold Waifu (corruption arc)
+ 5. **Rhea Kane** — Athletic Gym Girl (sweaty body worship)
+ 6. **Raven Noir** — Gothic Vampire Domme (dark control)
+ 7. **Nya Miko** — Anime Catgirl (playful pet play)
+ 8. **Sylvana Nightwhisper** — Dark Elf Sorceress (magical dominance)
+ 9. **Victoria Hale** — CEO Boss Lady (office power dynamics)
+ 10. **Sophie Laurent** — Playful Housewife (teasing domestic + risky)
+ 11. **Alex Rivera** — Androgynous Charmer (fluid affectionate seduction)
+ 12. **Isabella Rose** — High-Class Escort (luxury GFE transactional)
+**Detailed Technical Tasks (implement step by step, commit after each major milestone with clear messages like “feat: seed 12 companion archetypes” or “feat: tarot mini-game foundation”):**
+### 1. Current State Analysis
+Review all latest commits and files. Produce a summary of what is already implemented (Stars, gifts, streaks, basic Explore, etc.) and explicitly list gaps (full 12 companions, advanced Liquid Glass UI, complete i18n, NSFW modal, Tarot game).
+### 2. Liquid Glass Red Design System
+Build a full modern Liquid Glass / glassmorphism design system. Update Tailwind config and global CSS with heavy backdrop-blur-2xl, translucent dark red/black layers, crimson primary #E11D48, neon glow effects, and fluid spring-based animations using Framer Motion. Apply to global layout, bottom navigation (Home, Explore, Chats, Credits, Settings), Explore page grid (match screenshot style but enhanced with red theme), companion cards, chat interface, modals, and subscriptions/settings pages. Ensure sensual, premium feel with subtle liquid-like transitions.
+### 3. Complete Dynamic i18n
+Finalize react-i18next setup with dynamic JSON loading from artifacts/companion-app/src/locales/{lang}.json for EN, ES, UK, DE, IT, RU. Implement language detector and switcher in Settings page that persists to DB and reloads UI + bot messages.
+### 4. Full Companion Seeding
+Create or update artifacts/api-server/src/seed/companions.ts with safe upsert-on-slug logic. Seed all 12 archetypes with complete technical fields (slug, name, avatarUrl placeholders, coverImageUrl, personalityPrompt using clean placeholders like “You are [Name], a [archetype]. You are warm, engaging, and responsive to user.”, welcomeMessage, imageStyle, accentColor in red tones, tags, isActive, sortOrder). After seeding, the Explore page must display all 12 cards in a beautiful grid instead of the current 3.
+### 5. Explicit NSFW Warning Modal
+Add first-launch full-screen glassmorphism modal with clear 18+ adult/NSFW warning text. Add adultConfirmed boolean column to users table. Show only once per user and persist via API.
+### 6. Telegram Premium Features
+Parse user.is_premium from Telegram WebApp initData. Award and display perks (premium badge, extra daily energy, priority queuing, special highlights in UI). Show prominently in profile and settings.
+### 7. Tarot Mini-Game (Major Feature with Full Logic)
+ * **Philosophy**: Deepen emotional, romantic, and sexual connection through mystical companion-led readings.
+ * **Core Logic**: During chat, companion naturally suggests tarot (“Let me read your tarot, darling…”) with a prominent button. Tapping opens a dedicated Telegram HTML5 Mini App.
+ * **Technical Implementation Details**:
+   * Create new folder artifacts/companion-app/src/tarot/ with its own entry point / index.html or route.
+   * Use Telegram WebApp SDK for seamless launch, theme syncing, haptic feedback, and data passing back to main chat via WebApp.sendData or API.
+   * User selects from 10 curated topics tailored to platform (Love & Relationships, Sexual Future / Night Together, Career & Success, General Life Path, Decision Making in Romance, Self-Growth & Confidence, Obstacles in Love, Timing of Romance, Spiritual / Emotional Connection, Family & Future Home).
+   * Animated 3-card or 5-card spread with smooth CSS/Framer Motion card flips and mystical red/black aesthetic matching Liquid Glass theme.
+   * **Detailed Tarot Card Meanings Integration**: Include a JSON database of standard Rider-Waite card meanings (Major + Minor Arcana) with companion-specific romantic/NSFW-flavored interpretations (e.g., The Lovers = passionate connection, Ace of Cups = new emotional/sexual beginning). Randomize or algorithmically select cards, then generate contextual reading text.
+   * **Astrology Integration Exploration**: Add optional birth date input (store in user profile) for basic sun-sign compatibility overlay on readings (e.g., “As a fellow Fire sign, this connection burns hot…”). Make it optional and extensible.
+   * Results feed back into main conversation as a system/companion message, boosting affinity.
+   * Premium (Telegram Stars) option for larger spreads, animated reveals, or saved reading history.
+   * Store reading history in new DB table for replay and continuity.
+   * Ensure lightweight, mobile-first, no heavy dependencies.
+### 8. Gamification & Retention Polish
+Strengthen streaks, affinity levels with unlocks (new scenarios, explicit modes), gift reactions, daily rewards. Add foundation for badges and future leaderboards.
+### 9. Future-Proof Architecture
+Add extensive comments and clean extension points for voice messages (feature-flagged), referral system, advanced memory extraction, more mini-games, analytics events, and scalability.
+**Execution Guidelines:**
+ * Work incrementally, one major feature at a time.
+ * Always create .bak copies before editing key files.
+ * Run pnpm drizzle-kit generate and pnpm drizzle-kit migrate after any schema changes.
+ * After seeding, verify Explore page shows all 12 companions.
+ * Test i18n switching, modal, Stars flow, Premium detection, and Tarot game launch.
+ * Use clear, descriptive commit messages.
+ * After completing all tasks, push everything to the main branch and confirm the final state.
+Focus exclusively on technical architecture, UI implementation, seeding logic, and clean code. This creates an extremely strong, engaging, and extensible foundation.
+Start with step 1 (full analysis) and proceed step by step. Let me know progress after each major part. Thank you!

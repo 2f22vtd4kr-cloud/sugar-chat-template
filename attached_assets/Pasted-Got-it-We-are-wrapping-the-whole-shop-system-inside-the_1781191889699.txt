@@ -1,0 +1,61 @@
+Got it! We are wrapping the whole shop system inside the visual redesign parameters to banish that generic purple look seen in image_5.png, image_6.png, and image_7.png. The item shop needs to drip with that dark, high-end Liquid Glass red aesthetic.
+Here is your comprehensive, ultimate master prompt fully combined with the translated English commands, the retention loops, and the overalled adult visual shop architecture.
+Copy and paste this entire block directly into your Replit Agent chat window:
+```markdown
+## CRITICAL EMERGENCY DIRECTIVE: REPLIT SERVER CRASH, BOT OVERHAUL & PREMIUM SHOP ALIGNMENT
+
+The platform is currently crashing on boot, and the Telegram Mini App is failing to load. We must immediately resolve all runtime crashes, bring the application to a fully functional status, completely overhaul the Telegram Bot startup user interface to match premium design specifications, and transform the item shop to match a high-end adult style system. Follow these execution phases meticulously. Do not skip any steps.
+
+---
+
+### PHASE 1: DIAGNOSE & FIX RUNTIME CRASHES (SWISS WATCH STABILITY)
+Before changing any feature code, analyze why the server is failing to launch:
+1. Check the Replit console log output for the exact stack trace causing the crash.
+2. Ensure backward compatibility in `lib/db/schema.ts`. If columns are missing or type mismatches exist, fix them. Immediately run:
+```bash
+   pnpm drizzle-kit generate
+   pnpm drizzle-kit migrate
+
+```
+ 3. Verify that the application correctly binds to the assigned Replit environment PORT (defaulting to 3000 if not specified).
+ 4. Ensure all newly added secrets (OPENROUTER_API_KEY, TELEGRAM_BOT_TOKEN, REDIS_URL, etc.) are safely parsed with fallback defaults so they do not throw unhandled initialization exceptions.
+### PHASE 2: TELEGRAM BOT UI/UX RESET (ELIMINATE THE TEXT WALL)
+Completely eliminate the long inline list of 12 text buttons for selecting characters within the Telegram native chat window. It looks unpolished and text-heavy. Replace the bot's /start welcome workflow entirely with this clean, visually striking, native structure:
+ 1. **Clean Greeting Message:** When a user triggers /start, send an elegant, welcoming introductory text in English framing the platform's premium companion identity.
+ 2. **The 3 Core Reply Keyboard Buttons (Strictly English UI):** Attach a permanent native Reply Keyboard to the bottom of the user's screen containing exactly these three options:
+   * 💜 **Choose Character** (This button must be configured to natively launch the Telegram Mini App straight to the Explore/Characters screen, showing the 12 premium grid cards).
+   * 👑 **Subscription** (Launches the Mini App directly to the Subscriptions/Credits screen).
+   * ⚙️ **Settings** (Launches the Mini App directly to the Settings/i18n profile layout).
+ 3. **Remove Redundant Actions:** Completely strip out the generic, non-functional default "Open Web App" title bar button. The interactive text actions handle all navigation natively.
+### PHASE 3: LIQUID GLASS RED SHOP OVERHAUL (KINKY SHOP REVAMP)
+The default item shop styles look disconnected from our adult aesthetic. Redesign the entire item catalog layout matching references image_5.png, image_6.png, and image_7.png into our luxurious crimson color space:
+ 1. **Visual Theme Overhaul:**
+   * Replace all default purple button gradients with our cohesive **Primary Crimson (#E11D48)** and **Accent Neon (#F43F5E)** layout parameters.
+   * Apply high-end glassmorphism styling across the grid cards: background: rgba(28, 14, 16, 0.45); border: 1px solid rgba(225, 29, 72, 0.2); backdrop-filter: blur(16px);.
+   * Glow effect on hover/active purchase states: box-shadow: 0 0 20px rgba(225, 29, 72, 0.3);.
+ 2. **Catalog Seeding & Layout:**
+   * Build an itemized product grid displaying high-end illustrative assets with clear typography, inline information triggers (ⓘ), and diamond currency indicators layout matching image_5.png, image_6.png, and image_7.png.
+   * Ensure standard seed items are correctly mapped with clear descriptive labels (e.g., *Bondage Rope, Lace Lingerie, Dildo, Anal Plug, Lubricant, VIP Pass*).
+ 3. **Functional Purchase Architecture:**
+   * Ensure that clicking an item container properly triggers the verification modal dialog, processes the character diamond consumption state logic, and updates user inventory tracking correctly without crashing.
+### PHASE 4: DAILY ASTROLOGICAL TAROT NOTIFICATION SYSTEM
+Implement the automated notification retention loop natively wired into database parameters:
+ 1. **Database Schema Additions (lib/db/schema.ts):**
+   * Add dailyTarotEnabled: boolean (default true) to the users table.
+   * Add lastTarotSentAt: timestamp to track execution history.
+ 2. **Frontend UI Toggle Switch:**
+   * Inside the Settings / Profile screen (/settings), build a premium-styled fluid glassmorphism toggle component labeled: *"Receive Daily Tarot Readings from your partner"* (and provide localized JSON strings for EN, ES, UK, DE, IT, RU).
+   * Wire this toggle to an explicit API route (PATCH /api/user/settings) to flip the dailyTarotEnabled flag in the database instantly.
+ 3. **Automated Cron / Background Execution Job:**
+   * Build an asynchronous background check function (or a simulated hourly interval worker) that filters for users where dailyTarotEnabled is true and lastTarotSentAt is older than 24 hours.
+   * **The Dynamic Message Generation:** Have the system look up the user's most frequently messaged companion (or active conversation thread). Trigger an internal pipeline call to our provider fallback system using a strict system instruction:
+     *"You are [Companion Name]. Generate a short, highly personalized, mystical and deeply romantic morning tarot card drawing for your partner. Mention the card drawn and its passionate/intimate meaning in your characteristic tone. Keep it concise, engaging, and end with an alluring question."*
+   * **Bot API Push Delivery:** Push the generated reading text directly into the user's native Telegram chat via the Telegram Bot API endpoint. Update lastTarotSentAt immediately upon a successful push sequence.
+### PHASE 5: VERIFICATION & DEPLOYMENT CHECKLIST
+ * Run pnpm build across the monorepo to guarantee all frontend components compile perfectly and TypeScript asset bundling succeeds without warnings.
+ * Launch the local server worker and verify the console outputs Server running smoothly on port [X] without terminating.
+ * Open the Telegram interface, clear the bot chat history, send /start, and confirm that the layout accurately mirrors the 3 clean custom menu toggles (Choose Character, Subscription, Settings) without falling back to inline text lists.
+ * Navigate to the Mini App shop tab and verify that the items render inside glowing glass containers instead of default purple cards.
+```
+
+```

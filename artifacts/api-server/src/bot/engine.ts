@@ -1,4 +1,4 @@
-import { Telegraf, Markup } from "telegraf";
+import { Telegraf, Markup, type Context } from "telegraf";
 import { config } from "../lib/config.js";
 import { db, usersTable, companionsTable, conversationsTable, messagesTable, ledgerEntriesTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { textQueue } from "../queues/text-queue.js";
 import { imageQueue } from "../queues/image-queue.js";
 import { sql } from "drizzle-orm";
+import { DEFAULT_COMPANIONS } from "../lib/companion-catalog.js";
 
 export const bot = new Telegraf(config.telegramBotToken);
 
@@ -18,6 +19,20 @@ export const STARS_PACKAGES: Record<string, { credits: number; stars: number; la
 
 // Active companion sessions: chatId -> { companionId, conversationId }
 const activeSessions = new Map<number, { companionId: string; conversationId: string; companionName: string }>();
+const companionOrder = new Map(DEFAULT_COMPANIONS.map((companion, index) => [companion.id, index]));
+
+function sortCompanions<T extends { id: string }>(companions: T[]): T[] {
+  return companions.sort((a, b) => {
+    const aOrder = companionOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+    const bOrder = companionOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+    return aOrder - bOrder;
+  });
+}
+
+function companionButtonLabel(name: string, personality: string): string {
+  const shortPersonality = personality.length > 34 ? `${personality.slice(0, 31)}…` : personality;
+  return `${name} — ${shortPersonality}`;
+}
 
 // Upsert user and return DB user
 async function upsertUser(telegramId: number, username?: string) {
@@ -50,9 +65,18 @@ bot.start(async (ctx) => {
   const { id, username } = ctx.from;
   const user = await upsertUser(id, username);
 
-  const companions = await db.select().from(companionsTable);
+  const requestedCompanionId = ctx.payload?.startsWith("companion_")
+    ? ctx.payload.slice("companion_".length)
+    : null;
+
+  if (requestedCompanionId) {
+    await selectCompanion(ctx, requestedCompanionId);
+    return;
+  }
+
+  const companions = sortCompanions(await db.select().from(companionsTable));
   const companionButtons = companions.map((c) =>
-    [Markup.button.callback(`${c.name} — ${c.personality.substring(0, 30)}`, `companion:${c.id}`)]
+    [Markup.button.callback(companionButtonLabel(c.name, c.personality), `companion:${c.id}`)]
   );
 
   await ctx.reply(
@@ -208,12 +232,20 @@ bot.on("message", async (ctx, next) => {
   return next();
 });
 
-// Companion selection
-bot.action(/^companion:(.+)$/, async (ctx) => {
-  const companionId = ctx.match[1];
+async function selectCompanion(ctx: Context, companionId: string): Promise<void> {
+  if (!ctx.from) {
+    await ctx.reply("Open this in a Telegram chat to select a companion.");
+    return;
+  }
+
   const { id: telegramId, username } = ctx.from;
   const user = await upsertUser(telegramId, username);
-  const chatId = ctx.chat!.id;
+  const chatId = ctx.chat?.id;
+
+  if (!chatId) {
+    await ctx.reply("Open this in a Telegram chat to select a companion.");
+    return;
+  }
 
   const companion = await db
     .select()
@@ -223,7 +255,7 @@ bot.action(/^companion:(.+)$/, async (ctx) => {
     .then((r) => r[0]);
 
   if (!companion) {
-    await ctx.answerCbQuery("Companion not found.");
+    await ctx.reply("Companion not found. Use /start to refresh the companion list.");
     return;
   }
 
@@ -258,11 +290,16 @@ bot.action(/^companion:(.+)$/, async (ctx) => {
     companionName: companion.name,
   });
 
-  await ctx.answerCbQuery();
   await ctx.reply(
     `You're now chatting with ${companion.name}.\n\nAffinity: ${conversation.affinity}/100\n\nSend a message to chat. Use /image to request a picture (3 credits). Use /cancel to exit.`
   );
   await ctx.reply(companion.greetingText);
+}
+
+// Companion selection
+bot.action(/^companion:(.+)$/, async (ctx) => {
+  await ctx.answerCbQuery();
+  await selectCompanion(ctx, ctx.match[1]);
 });
 
 // Credit vault action

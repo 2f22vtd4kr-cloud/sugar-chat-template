@@ -1,12 +1,12 @@
 import { Queue, Worker } from "bullmq";
-import { createRedisConnection } from "../lib/redis.js";
+import { createBullConnectionOptions } from "../lib/redis.js";
 import { db, messagesTable, conversationsTable, usersTable, ledgerEntriesTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import axios from "axios";
 
 export const imageQueue = new Queue("image-processing", {
-  connection: createRedisConnection(),
+  connection: createBullConnectionOptions(),
 });
 
 export interface ImageJobData {
@@ -83,7 +83,7 @@ export const imageWorker = new Worker<ImageJobData>(
     return { msgId, imageUrl };
   },
   {
-    connection: createRedisConnection(),
+    connection: createBullConnectionOptions(),
     concurrency: 3,
   }
 );

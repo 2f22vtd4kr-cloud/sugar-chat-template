@@ -1,5 +1,5 @@
 import { Queue, Worker } from "bullmq";
-import { createRedisConnection } from "../lib/redis.js";
+import { createBullConnectionOptions } from "../lib/redis.js";
 import { config } from "../lib/config.js";
 import { db, messagesTable, conversationsTable, usersTable, ledgerEntriesTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
@@ -7,7 +7,7 @@ import { randomUUID } from "crypto";
 import axios from "axios";
 
 export const textQueue = new Queue("text-processing", {
-  connection: createRedisConnection(),
+  connection: createBullConnectionOptions(),
 });
 
 export interface TextJobData {
@@ -91,7 +91,7 @@ export const textWorker = new Worker<TextJobData>(
     return { replyId, content: replyContent };
   },
   {
-    connection: createRedisConnection(),
+    connection: createBullConnectionOptions(),
     concurrency: 5,
   }
 );

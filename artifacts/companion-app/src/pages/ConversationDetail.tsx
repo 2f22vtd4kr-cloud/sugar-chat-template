@@ -122,7 +122,18 @@ export default function ConversationDetail({ companionId }: ConversationDetailPr
   };
 
   const handleBack = () => { haptic("light"); navigate("/conversations"); };
-  const handleContinueInBot = () => { haptic("medium"); (window as any).Telegram?.WebApp?.close() ?? navigate("/conversations"); };
+  const handleContinueInBot = () => {
+    haptic("medium");
+    const botUsername = import.meta.env.VITE_BOT_USERNAME as string | undefined;
+    const deepLink = botUsername ? `https://t.me/${botUsername}?start=companion_${companionId}` : undefined;
+    if (deepLink) {
+      const openTelegramLink = (window as any).Telegram?.WebApp?.openTelegramLink as ((url: string) => void) | undefined;
+      if (openTelegramLink) openTelegramLink(deepLink);
+      else window.open(deepLink, "_blank");
+      return;
+    }
+    (window as any).Telegram?.WebApp?.close?.() ?? navigate("/conversations");
+  };
 
   const messages = conversation?.messages ?? [];
   const shouldShowTimestamp = (i: number) =>

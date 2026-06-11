@@ -1,4 +1,5 @@
 import { Redis, type RedisOptions } from "ioredis";
+import Redis from "ioredis";
 import { config } from "./config.js";
 
 export const redisConnectionOptions: RedisOptions = {
@@ -17,6 +18,15 @@ export const redisConnectionOptions: RedisOptions = {
  */
 export const createRedisConnection = (): Redis => {
   const redis = new Redis(config.redisUrl, redisConnectionOptions);
+export const createRedisConnection = (): any => {
+  const redis = new Redis(config.redisUrl, {
+    maxRetriesPerRequest: null, // required by BullMQ workers
+    enableReadyCheck: false,
+    retryStrategy: (times) => {
+      if (times > 5) return null; // stop retrying after 5 attempts
+      return Math.min(times * 500, 3000);
+    },
+  });
 
   redis.on("connect", () => console.log("[Redis] Connected"));
   redis.on("ready", () => console.log("[Redis] Ready"));

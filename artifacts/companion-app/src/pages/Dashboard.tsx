@@ -9,6 +9,16 @@ import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useTelegram } from "@/context/TelegramContext";
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+interface BonusSummary {
+  hasPremiumAccess: boolean;
+  isTelegramPremium: boolean;
+  extraEnergyPerDay: number;
+  priorityMultiplier: number;
+  dailyImageCredits: number;
+  badgeLabel: string;
+}
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -16,6 +26,10 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const { data: user, isLoading: userLoading } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
   const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary({ query: { queryKey: getGetDashboardSummaryQueryKey() } });
+  const { data: bonuses } = useQuery<BonusSummary>({
+    queryKey: ["users", "bonuses"],
+    queryFn: () => fetch(`${import.meta.env.BASE_URL}api/users/me/bonuses`).then((r) => r.json()),
+  });
 
   const isLoading = userLoading || summaryLoading;
   const displayName = user?.username ? `@${user.username}` : user?.firstName ?? "";
@@ -53,6 +67,37 @@ export default function Dashboard() {
 
         {/* Daily streak banner */}
         <StreakBanner />
+
+        {bonuses && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+            <Card className="glass-card rounded-2xl overflow-hidden border-0">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary">
+                      {t("dashboard.bonus_title")}
+                    </p>
+                    <h2 className="font-serif text-lg text-foreground">
+                      {bonuses.hasPremiumAccess ? bonuses.badgeLabel : t("dashboard.bonus_standard")}
+                    </h2>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("dashboard.bonus_priority")}</p>
+                    <p className="text-lg font-bold text-foreground">{bonuses.priorityMultiplier.toFixed(2)}x</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                  <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1">
+                    {t("dashboard.bonus_energy", { count: bonuses.extraEnergyPerDay })}
+                  </span>
+                  <span className="rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1">
+                    {t("dashboard.bonus_images", { count: bonuses.dailyImageCredits })}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 gap-3">

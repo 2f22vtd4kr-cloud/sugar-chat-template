@@ -45,6 +45,7 @@ router.get("/summary", requireTelegramAuth, async (req, res) => {
         .then((r) => r[0]);
 
       return {
+        companionId: conv.companionId,
         companionName: conv.companionName,
         companionAvatar: conv.companionAvatar,
         lastMessage: lastMsg?.content ?? null,

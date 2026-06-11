@@ -1,5 +1,6 @@
 import { useGetMe, getGetMeQueryKey, useGetDashboardSummary, getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { StreakBanner } from "@/components/StreakBanner";
 import { motion } from "framer-motion";
 import { Coins, Heart, MessageCircle, Sparkles, Crown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,21 +8,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "react-i18next";
 import { useTelegram } from "@/context/TelegramContext";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const { isPremium } = useTelegram();
+  const { isPremium, haptic } = useTelegram();
+  const [, navigate] = useLocation();
   const { data: user, isLoading: userLoading } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
   const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary({ query: { queryKey: getGetDashboardSummaryQueryKey() } });
 
   const isLoading = userLoading || summaryLoading;
-
   const displayName = user?.username ? `@${user.username}` : user?.firstName ?? "";
 
   return (
     <AppLayout>
-      <div className="p-4 pt-8 space-y-6">
+      <div className="p-4 pt-8 space-y-5 pb-8">
+        {/* Header */}
         <header className="space-y-1.5">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -43,15 +45,14 @@ export default function Dashboard() {
               </motion.span>
             )}
           </motion.div>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-muted-foreground text-sm"
-          >
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
+            className="text-muted-foreground text-sm">
             {t("dashboard.subtitle")}
           </motion.p>
         </header>
+
+        {/* Daily streak banner */}
+        <StreakBanner />
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 gap-3">
@@ -83,7 +84,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Get subscription banner (if no subscription) */}
+        {/* Subscription / upgrade banner */}
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Link href="/plans">
             <div className="rounded-2xl p-4 cursor-pointer flex items-center justify-between hover:brightness-110 transition-all"
@@ -123,13 +124,11 @@ export default function Dashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + i * 0.08 }}
                   className="glass-card rounded-2xl p-3 flex items-center gap-3 cursor-pointer hover:brightness-110 transition-all"
+                  onClick={() => { haptic("light"); navigate(`/conversations/${activity.companionId}`); }}
                 >
-                  <img
-                    src={activity.companionAvatar}
-                    alt={activity.companionName}
+                  <img src={activity.companionAvatar} alt={activity.companionName}
                     className="w-11 h-11 rounded-full object-cover border-2"
-                    style={{ borderColor: "rgba(225,29,72,0.3)" }}
-                  />
+                    style={{ borderColor: "rgba(225,29,72,0.3)" }} />
                   <div className="flex-1 overflow-hidden">
                     <div className="flex items-center justify-between">
                       <h3 className="font-medium text-sm">{activity.companionName}</h3>

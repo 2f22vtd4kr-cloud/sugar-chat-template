@@ -95,6 +95,7 @@ export interface CreditPurchaseInput {
 }
 
 export interface ActivityItem {
+  companionId: string;
   companionName: string;
   companionAvatar: string;
   /** @nullable */

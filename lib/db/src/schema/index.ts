@@ -12,6 +12,8 @@ export const usersTable = pgTable("users", {
   language: text("language").notNull().default("en"),
   adultConfirmed: boolean("adult_confirmed").notNull().default(false),
   isTelegramPremium: boolean("is_telegram_premium").notNull().default(false),
+  streakDays: integer("streak_days").notNull().default(0),
+  lastLoginDate: text("last_login_date"), // "YYYY-MM-DD"
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -33,6 +35,7 @@ export const conversationsTable = pgTable("conversations", {
   userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   companionId: text("companion_id").notNull().references(() => companionsTable.id, { onDelete: "cascade" }),
   affinity: integer("affinity").notNull().default(0),
+  milestonesReached: text("milestones_reached").default(""), // comma-separated: "25,50,75"
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (t) => ({
@@ -62,11 +65,21 @@ export const ledgerEntriesTable = pgTable("ledger_entries", {
 export const subscriptionsTable = pgTable("subscriptions", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
-  planId: text("plan_id").notNull(), // 'weekly' | 'monthly'
+  planId: text("plan_id").notNull(),
   starsPaymentId: text("stars_payment_id").unique(),
   startsAt: timestamp("starts_at").notNull().defaultNow(),
   expiresAt: timestamp("expires_at").notNull(),
-  status: text("status").notNull().default("active"), // 'active' | 'expired' | 'cancelled'
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const giftsTable = pgTable("gifts", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  conversationId: text("conversation_id").notNull().references(() => conversationsTable.id, { onDelete: "cascade" }),
+  giftType: text("gift_type").notNull(), // "rose" | "heart" | "diamond" | "star"
+  creditsCost: integer("credits_cost").notNull(),
+  affinityGain: integer("affinity_gain").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -76,6 +89,7 @@ export const insertConversationSchema = createInsertSchema(conversationsTable).o
 export const insertMessageSchema = createInsertSchema(messagesTable).omit({ createdAt: true });
 export const insertLedgerEntrySchema = createInsertSchema(ledgerEntriesTable).omit({ createdAt: true });
 export const insertSubscriptionSchema = createInsertSchema(subscriptionsTable).omit({ createdAt: true });
+export const insertGiftSchema = createInsertSchema(giftsTable).omit({ createdAt: true });
 
 export type User = typeof usersTable.$inferSelect;
 export type Companion = typeof companionsTable.$inferSelect;
@@ -83,9 +97,12 @@ export type Conversation = typeof conversationsTable.$inferSelect;
 export type Message = typeof messagesTable.$inferSelect;
 export type LedgerEntry = typeof ledgerEntriesTable.$inferSelect;
 export type Subscription = typeof subscriptionsTable.$inferSelect;
+export type Gift = typeof giftsTable.$inferSelect;
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertCompanion = z.infer<typeof insertCompanionSchema>;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertLedgerEntry = z.infer<typeof insertLedgerEntrySchema>;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type InsertGift = z.infer<typeof insertGiftSchema>;

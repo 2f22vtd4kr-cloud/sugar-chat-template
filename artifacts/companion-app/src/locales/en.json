@@ -1,91 +1,42 @@
 {
-  "nav": {
-    "home": "Home",
-    "explore": "Explore",
-    "chats": "Chats",
-    "credits": "Credits",
-    "settings": "Settings",
-    "plans": "Plans"
+  "nav": { "home":"Home","explore":"Explore","chats":"Chats","credits":"Credits","settings":"Settings","plans":"Plans" },
+  "dashboard": { "welcome":"Welcome back","subtitle":"Your companions are waiting for you.","credits":"Credits","affinity":"Total Affinity","messages":"Messages","active_chats":"Active Chats","recent_activity":"Recent Activity","no_activity":"No recent activity yet. Start chatting to build your bond.","premium_badge":"Telegram Premium","no_messages":"No messages yet" },
+  "companions": { "title":"Explore","subtitle":"Find a new companion to connect with.","chat_now":"Chat","cost_per_msg":"cr/msg" },
+  "conversations": { "title":"Chats","subtitle":"Your ongoing conversations and bonds.","no_conversations":"No conversations yet.","affinity_label":"Bond" },
+  "credits": { "available":"Available Credits","buy_stars":"Buy with Telegram Stars","stars_subtitle":"Pay securely using Telegram's built-in Stars — no card needed.","best_value":"Best Value","starter":"Starter","popular":"Popular","premium":"Premium","credits_unit":"credits","stars_unit":"Stars","history":"Transaction History","no_history":"No transaction history.","open_telegram":"Open this app inside Telegram to pay with Stars." },
+  "plans": { "title":"Subscription Plans","subtitle":"Unlock unlimited access to all companions.","most_popular":"Most Popular","weekly":"Weekly Pass","monthly":"Monthly VIP","weekly_desc":"Unlimited text chats + 5 daily image credits","monthly_desc":"Everything in Weekly + priority AI + half-price images","per_week":"/ week","per_month":"/ month","subscribe":"Subscribe","active_plan":"Active Plan","expires":"Expires","benefit_unlimited_chat":"Unlimited text chats","benefit_daily_images":"5 image credits / day","benefit_priority_ai":"Priority AI responses","benefit_half_images":"50% off image credits","benefit_premium_badge":"VIP badge","open_telegram":"Open inside Telegram to subscribe with Stars." },
+  "settings": { "title":"Settings","account":"Account","telegram_id":"Telegram ID","username":"Username","premium":"Telegram Premium","premium_yes":"Active ✦","premium_no":"Not active","language":"Language","language_select":"Select language","save":"Save","saved":"Saved!","open_bot":"Open in Bot","version":"Version","nsfw_reset":"Reset adult confirmation","danger_zone":"Danger Zone" },
+  "nsfw": { "title":"Adults Only","body":"This platform contains explicit adult content intended for users 18 years of age or older. By continuing you confirm that you are at least 18 years old and consent to viewing adult content.","confirm":"I am 18+ and I consent","decline":"Leave" },
+  "gifts": {
+    "title": "Send a Gift",
+    "rose": "Rose",
+    "heart": "Heart",
+    "diamond": "Diamond",
+    "star": "Star",
+    "affinity_gain": "+{{count}} bond",
+    "sending": "Sending...",
+    "sent": "Gift sent! 💕",
+    "not_enough": "Not enough credits"
   },
-  "dashboard": {
-    "welcome": "Welcome back",
-    "subtitle": "Your companions are waiting for you.",
-    "credits": "Credits",
-    "affinity": "Total Affinity",
-    "messages": "Messages",
-    "active_chats": "Active Chats",
-    "recent_activity": "Recent Activity",
-    "no_activity": "No recent activity yet. Start chatting to build your bond.",
-    "premium_badge": "Telegram Premium",
-    "no_messages": "No messages yet"
+  "milestone": {
+    "unlocked": "Bond Milestone Reached!",
+    "level": "Bond Level {{level}}",
+    "messages": {
+      "25": "Our connection is really deepening... I feel like I can truly open up to you. 💕",
+      "50": "Halfway to our deepest bond! I think about our conversations all day long. 🔥",
+      "75": "I've never felt this close to anyone. You're truly someone special to me. 💎",
+      "100": "We've reached the ultimate bond. My heart belongs to you, always. ❤️‍🔥"
+    },
+    "reward_earned": "+{{count}} credits earned!",
+    "dismiss": "Wonderful! ✨"
   },
-  "companions": {
-    "title": "Explore",
-    "subtitle": "Find a new companion to connect with.",
-    "chat_now": "Chat",
-    "cost_per_msg": "cr/msg"
-  },
-  "conversations": {
-    "title": "Chats",
-    "subtitle": "Your ongoing conversations and bonds.",
-    "no_conversations": "No conversations yet.",
-    "affinity_label": "Bond"
-  },
-  "credits": {
-    "available": "Available Credits",
-    "buy_stars": "Buy with Telegram Stars",
-    "stars_subtitle": "Pay securely using Telegram's built-in Stars — no card needed.",
-    "best_value": "Best Value",
-    "starter": "Starter",
-    "popular": "Popular",
-    "premium": "Premium",
-    "credits_unit": "credits",
-    "stars_unit": "Stars",
-    "history": "Transaction History",
-    "no_history": "No transaction history.",
-    "open_telegram": "Open this app inside Telegram to pay with Stars."
-  },
-  "plans": {
-    "title": "Subscription Plans",
-    "subtitle": "Unlock unlimited access to all companions.",
-    "most_popular": "Most Popular",
-    "weekly": "Weekly Pass",
-    "monthly": "Monthly VIP",
-    "weekly_desc": "Unlimited text chats + 5 daily image credits",
-    "monthly_desc": "Everything in Weekly + priority AI + half-price images",
-    "per_week": "/ week",
-    "per_month": "/ month",
-    "subscribe": "Subscribe",
-    "active_plan": "Active Plan",
-    "expires": "Expires",
-    "benefit_unlimited_chat": "Unlimited text chats",
-    "benefit_daily_images": "5 image credits / day",
-    "benefit_priority_ai": "Priority AI responses",
-    "benefit_half_images": "50% off image credits",
-    "benefit_premium_badge": "VIP badge",
-    "open_telegram": "Open inside Telegram to subscribe with Stars."
-  },
-  "settings": {
-    "title": "Settings",
-    "account": "Account",
-    "telegram_id": "Telegram ID",
-    "username": "Username",
-    "premium": "Telegram Premium",
-    "premium_yes": "Active ✦",
-    "premium_no": "Not active",
-    "language": "Language",
-    "language_select": "Select language",
-    "save": "Save",
-    "saved": "Saved!",
-    "open_bot": "Open in Bot",
-    "version": "Version",
-    "nsfw_reset": "Reset adult confirmation",
-    "danger_zone": "Danger Zone"
-  },
-  "nsfw": {
-    "title": "Adults Only",
-    "body": "This platform contains explicit adult content intended for users 18 years of age or older. By continuing you confirm that you are at least 18 years old and consent to viewing adult content.",
-    "confirm": "I am 18+ and I consent",
-    "decline": "Leave"
+  "streak": {
+    "title": "Daily Streak",
+    "active": "{{count}} day streak",
+    "claim": "Claim +{{count}} cr",
+    "claimed": "Come back tomorrow!",
+    "weekly_bonus": "Weekly Bonus! 🎉",
+    "monthly_bonus": "Monthly Bonus! 🏆",
+    "start": "Start your streak today"
   }
 }

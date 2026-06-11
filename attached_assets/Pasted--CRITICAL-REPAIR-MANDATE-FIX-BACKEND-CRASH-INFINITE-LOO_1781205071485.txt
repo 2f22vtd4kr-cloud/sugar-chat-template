@@ -1,0 +1,31 @@
+# 🚨 CRITICAL REPAIR MANDATE: FIX BACKEND CRASH & INFINITE LOOP LOADING
+
+Both the Telegram Bot (image_7.png) and the Mini App Frontend (image_8.png) are completely unresponsive due to an apparent initialization crash or port mapping mismatch. You must run a comprehensive diagnostic and self-healing round immediately across the server configuration files. Do not rewrite features; fix the execution runtime.
+
+---
+
+### 🔍 STEP 1: FORCE DEBUG LIBRARIES & ENVIRONMENT CHECKS
+*   Check the Replit execution logs immediately for any unhandled exceptions, syntax breaks, or database connection pool issues.
+*   Verify that `process.env.TELEGRAM_BOT_TOKEN` and `process.env.DATABASE_URL` are completely resolved inside the bot runner file (`src/bot/` index layer). If missing, gracefully log an explicit, clear setup error instead of allowing the process to silently fail or drop out.
+
+### 🗄️ STEP 2: RECONCILE DB CONNECTIVITY & PRISMA COMPILATION
+*   Check if unapplied migrations or structural discrepancies are hanging the app server startup. Force execute safety checks:
+```bash
+    npx prisma generate
+    npx prisma db push
+    ```
+*   Ensure that the database initialization routines inside `src/seed.ts` are safely wrapped inside a `try/catch` block so a failing seed operation does not completely block the API server from listening to its assigned ports.
+
+### 🌐 STEP 3: REPAIR PORT BINDINGS & REPLIT DUAL-APP PROXYING
+The front-end app is stuck spinning because the API endpoints are unreachable. Fix your server listener configuration blocks:
+*   Ensure the backend Express/FastAPI framework binds to host address `0.0.0.0` using `process.env.PORT || 5000`.
+*   Verify that the Frontend Vite Dev Server (`companion-app`) is proxying API calls correctly to the true backend port destination without running into CORS configuration policy rejections.
+*   Confirm that the native web application validation layer inside `telegram-auth.ts` does not infinitely hang requests if it receives mock web development preview data directly from the `.replit.dev` sandbox.
+
+### 🤖 STEP 4: HEALTH REBOOT PROMPT
+*   Implement explicit runtime telemetry. Add a basic `/health` JSON healthcheck route returning `{"status": "ok"}` on the backend to test server responsiveness.
+*   Once structural edits are committed, run a clean workspace re-compilation (`npm run build` or target scripts).
+
+---
+
+**Do not request permission checkpoints. Debug the logs, fix the crashing processes, bring both the bot commands and front-end interface up, and provide the exact stack trace fix reports when complete!**

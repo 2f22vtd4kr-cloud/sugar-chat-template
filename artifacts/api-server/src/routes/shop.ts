@@ -13,7 +13,7 @@ import {
 import { eq, desc, and, gte, sum } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import { whaleRecoveryQueue, cancelWhaleJob } from "../queues/whale-recovery-queue.js";
+import { scheduleWhaleRecovery, cancelWhaleJob } from "../queues/whale-recovery-queue.js";
 
 const router = Router();
 router.use(requireTelegramAuth);
@@ -156,7 +156,7 @@ router.post("/checkout-intent", async (req, res) => {
   const item = SHOP_ITEMS.find((i) => i.id === itemId);
   if (!item) { res.status(404).json({ error: "Item not found" }); return; }
 
-  // Cancel any existing intent for this user (they changed item)
+  // Cancel any existing pending timer for this user (they changed item)
   try {
     const existing = await db
       .select()
@@ -166,25 +166,13 @@ router.post("/checkout-intent", async (req, res) => {
       .limit(1)
       .then((r) => r[0]);
 
-    if (existing?.bullJobId) {
-      await cancelWhaleJob(existing.bullJobId);
+    if (existing?.id) {
+      cancelWhaleJob(existing.id);
     }
   } catch { /* silent */ }
 
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
   const checkoutId = randomUUID();
-
-  // Enqueue whale recovery job (delayed 15 min)
-  let bullJobId: string | undefined;
-  try {
-    bullJobId = await whaleRecoveryQueue.add(
-      "whale-recovery",
-      { userId, itemId, itemName: item.name, basePrice: item.creditsCost, telegramChatId, checkoutId },
-      { delay: 15 * 60 * 1000, jobId: `whale-${userId}-${itemId}-${Date.now()}` }
-    ).then((j) => j.id ?? undefined);
-  } catch (err) {
-    console.error("[Shop] Failed to enqueue whale recovery:", err);
-  }
 
   // Persist abandoned checkout record
   try {
@@ -194,10 +182,13 @@ router.post("/checkout-intent", async (req, res) => {
       itemId,
       itemName: item.name,
       basePrice: item.creditsCost,
-      bullJobId: bullJobId ?? null,
+      bullJobId: null,
       expiresAt,
     });
   } catch { /* silent — non-critical */ }
+
+  // Schedule in-memory recovery timer (15 min) — no Redis needed
+  scheduleWhaleRecovery({ userId, itemId, itemName: item.name, basePrice: item.creditsCost, telegramChatId, checkoutId });
 
   res.json({ ok: true, checkoutId, expiresAt: expiresAt.toISOString() });
 });
@@ -344,8 +335,8 @@ router.post("/purchase", async (req, res) => {
         .limit(1)
         .then((r) => r[0]);
 
-      if (checkout?.bullJobId) {
-        await cancelWhaleJob(checkout.bullJobId);
+      if (checkout?.id) {
+        cancelWhaleJob(checkout.id);
       }
       await db
         .update(abandonedCheckoutsTable)

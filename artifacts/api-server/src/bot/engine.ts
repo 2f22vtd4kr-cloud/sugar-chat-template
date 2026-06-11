@@ -10,8 +10,8 @@ import {
 } from "@workspace/db";
 import { eq, and, desc, lt, isNull, or } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import { textQueue } from "../queues/text-queue.js";
-import { imageQueue } from "../queues/image-queue.js";
+import { processTextJob } from "../queues/text-queue.js";
+import { processImageJob } from "../queues/image-queue.js";
 import { sql } from "drizzle-orm";
 import { DEFAULT_COMPANIONS } from "../lib/companion-catalog.js";
 
@@ -732,7 +732,8 @@ bot.command("image", async (ctx) => {
   await ctx.reply("Generating your image… this takes a moment. 🎨");
 
   const ledgerEntryId = randomUUID();
-  await imageQueue.add("generate-image", {
+  // Fire-and-forget — no Redis needed
+  void processImageJob({
     conversationId: session.conversationId,
     userId: user.id,
     companionId: session.companionId,
@@ -741,7 +742,7 @@ bot.command("image", async (ctx) => {
     ledgerEntryId,
     telegramChatId: chatId,
     botToken: config.telegramBotToken,
-  });
+  }).catch((err) => console.error("[Bot] processImageJob failed:", err));
 
   await db.insert(messagesTable).values({
     id: randomUUID(),
@@ -833,7 +834,8 @@ bot.on("text", async (ctx) => {
     .limit(1)
     .then((r) => r[0]);
 
-  await textQueue.add("process-text", {
+  // Fire-and-forget — no Redis needed
+  void processTextJob({
     conversationId: activeSession.conversationId,
     userId: user.id,
     companionId: activeSession.companionId,
@@ -843,7 +845,7 @@ bot.on("text", async (ctx) => {
     telegramChatId: chatId,
     botToken: config.telegramBotToken,
     affinityLevel: currentConv?.affinity ?? 0,
-  });
+  }).catch((err) => console.error("[Bot] processTextJob failed:", err));
 
   await ctx.sendChatAction("typing");
 });

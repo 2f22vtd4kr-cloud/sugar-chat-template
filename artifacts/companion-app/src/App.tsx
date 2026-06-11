@@ -18,6 +18,7 @@ import ConversationDetail from "@/pages/ConversationDetail";
 import TarotPage from "@/pages/Tarot";
 import ShopPage from "@/pages/Shop";
 import InventoryPage from "@/pages/Inventory";
+import AdminPage from "@/pages/Admin";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -125,6 +126,7 @@ function Router() {
       <Route path="/credits" component={Credits} />
       <Route path="/plans" component={Plans} />
       <Route path="/settings" component={Settings} />
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );

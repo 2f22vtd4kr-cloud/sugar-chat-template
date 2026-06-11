@@ -117,7 +117,7 @@ async function upsertUser(telegramId: number, username?: string) {
   return user;
 }
 
-const MINI_APP_BASE = `https://t.me/${config.telegramBotUsername}/app`;
+const MINI_APP_BASE = config.miniAppUrl;
 
 // ── /start ───────────────────────────────────────────────────────────────────
 bot.start(async (ctx) => {
@@ -186,10 +186,10 @@ bot.start(async (ctx) => {
   await ctx.reply(
     welcomeText,
     Markup.inlineKeyboard([
-      [Markup.button.url("💜 Open App", MINI_APP_BASE)],
+      [Markup.button.webApp("💜 Open App", MINI_APP_BASE)],
       [
-        Markup.button.url("👑 Premium", `${MINI_APP_BASE}?startapp=plans`),
-        Markup.button.url("⚙️ Settings", `${MINI_APP_BASE}?startapp=settings`),
+        Markup.button.webApp("👑 Premium", MINI_APP_BASE),
+        Markup.button.webApp("⚙️ Settings", MINI_APP_BASE),
       ],
     ])
   );
@@ -215,10 +215,10 @@ bot.command("help", async (ctx) => {
       parse_mode: "Markdown",
       ...Markup.inlineKeyboard([
         [
-          Markup.button.url("📱 Open Mini App", MINI_APP_BASE),
+          Markup.button.webApp("📱 Open Mini App", MINI_APP_BASE),
           Markup.button.callback("⭐ Buy Credits", "buy_menu"),
         ],
-        [Markup.button.url("👑 Get Subscription", `${MINI_APP_BASE}?startapp=plans`)],
+        [Markup.button.webApp("👑 Get Subscription", MINI_APP_BASE)],
       ]),
     }
   );
@@ -401,7 +401,7 @@ bot.command("give_me_energy", async (ctx) => {
     {
       parse_mode: "Markdown",
       ...Markup.inlineKeyboard([
-        [Markup.button.url("💜 Start Chatting", MINI_APP_BASE)],
+        [Markup.button.webApp("💜 Start Chatting", MINI_APP_BASE)],
         [Markup.button.callback("⭐ Buy More Credits", "buy_menu")],
       ]),
     }
@@ -440,7 +440,7 @@ bot.command("energy", async (ctx) => {
       parse_mode: "Markdown",
       ...Markup.inlineKeyboard([
         [Markup.button.callback("⭐ Buy Credits with Stars", "buy_menu")],
-        [Markup.button.url("💎 Full Ledger", `${MINI_APP_BASE}?startapp=profile`)],
+        [Markup.button.webApp("💎 Full Ledger", MINI_APP_BASE)],
       ]),
     }
   );
@@ -810,7 +810,7 @@ bot.action("credits", async (ctx) => {
     `⚡ Credit Vault\n\nCurrent balance: ${user.credits} credits`,
     Markup.inlineKeyboard([
       [Markup.button.callback("⭐ Buy with Stars", "buy_menu")],
-      [Markup.button.url("Open Credit Store", `https://t.me/${config.telegramBotUsername}/app`)],
+      [Markup.button.webApp("Open Credit Store", MINI_APP_BASE)],
     ])
   );
 });

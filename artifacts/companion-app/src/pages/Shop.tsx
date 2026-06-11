@@ -33,147 +33,22 @@ interface PurchaseResult {
   discountPct: number;
 }
 
-// ── SVG Item Art ──────────────────────────────────────────────────────────────
-function RoseSvg() {
-  return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-10 h-10 drop-shadow">
-      <circle cx="28" cy="18" r="12" fill="url(#rs_rg)"/>
-      <ellipse cx="21" cy="22" rx="7" ry="10" fill="#be123c" opacity="0.7" transform="rotate(-30 21 22)"/>
-      <ellipse cx="36" cy="20" rx="6" ry="9" fill="#9f1239" opacity="0.75" transform="rotate(25 36 20)"/>
-      <path d="M28 30 Q26 40 24 48 Q28 46 32 48 Q30 40 28 30Z" fill="#15803d" opacity="0.85"/>
-      <path d="M26 36 Q19 34 17 31 Q21 38 26 36Z" fill="#16a34a" opacity="0.8"/>
-      <path d="M30 34 Q37 32 39 29 Q35 36 30 34Z" fill="#15803d" opacity="0.8"/>
-      <circle cx="28" cy="17" r="4.5" fill="#fb7185" opacity="0.5"/>
-      <defs>
-        <radialGradient id="rs_rg" cx="40%" cy="35%"><stop offset="0%" stopColor="#fda4af"/><stop offset="50%" stopColor="#e11d48"/><stop offset="100%" stopColor="#9f1239"/></radialGradient>
-      </defs>
-    </svg>
-  );
-}
-
-function WineSvg() {
-  return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-10 h-10 drop-shadow">
-      <rect x="24" y="6" width="8" height="8" rx="2" fill="#fbbf24" opacity="0.9"/>
-      <path d="M22 14 Q18 20 18 28 L18 46 Q18 50 28 50 Q38 50 38 46 L38 28 Q38 20 34 14Z" fill="url(#wn_g)"/>
-      <rect x="20" y="31" width="16" height="6" rx="1" fill="#fda4af" opacity="0.2"/>
-      <path d="M22 36 Q28 34 34 36" stroke="#fda4af" strokeWidth="0.7" opacity="0.4"/>
-      <defs>
-        <linearGradient id="wn_g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#7f1d1d"/><stop offset="100%" stopColor="#450a0a"/></linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
-function DiamondSvg() {
-  return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-10 h-10 drop-shadow">
-      <circle cx="28" cy="36" r="13" fill="none" stroke="url(#dm_rg)" strokeWidth="4.5"/>
-      <polygon points="28,8 19,20 28,28 37,20" fill="url(#dm_g)"/>
-      <polygon points="19,20 28,28 17,26" fill="#bfdbfe" opacity="0.55"/>
-      <polygon points="37,20 28,28 39,26" fill="#93c5fd" opacity="0.55"/>
-      <defs>
-        <linearGradient id="dm_g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#e0f2fe"/><stop offset="50%" stopColor="#7dd3fc"/><stop offset="100%" stopColor="#0ea5e9"/></linearGradient>
-        <linearGradient id="dm_rg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fcd34d"/><stop offset="100%" stopColor="#d97706"/></linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
-function VipSvg() {
-  return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-10 h-10 drop-shadow">
-      <rect x="5" y="18" width="46" height="26" rx="6" fill="url(#vp_g)"/>
-      <rect x="5" y="18" width="46" height="7" rx="6" fill="url(#vp_g2)" opacity="0.45"/>
-      <circle cx="16" cy="31" r="5" fill="#fbbf24" opacity="0.3"/>
-      <text x="24" y="35" fontSize="8" fill="#fcd34d" fontWeight="bold" fontFamily="serif">V I P</text>
-      <polygon points="28,4 30,10 36,10 31,14 33,20 28,16 23,20 25,14 20,10 26,10" fill="#fcd34d" opacity="0.9"/>
-      <defs>
-        <linearGradient id="vp_g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#78350f"/><stop offset="100%" stopColor="#451a03"/></linearGradient>
-        <linearGradient id="vp_g2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#fcd34d" stopOpacity="0"/><stop offset="50%" stopColor="#fcd34d" stopOpacity="0.4"/><stop offset="100%" stopColor="#fcd34d" stopOpacity="0"/></linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
-function OrbSvg() {
-  return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-10 h-10 drop-shadow">
-      <circle cx="28" cy="28" r="22" fill="url(#orb_g)"/>
-      <circle cx="28" cy="28" r="22" fill="none" stroke="url(#orb_s)" strokeWidth="1.2" opacity="0.6"/>
-      <ellipse cx="22" cy="20" rx="6" ry="3.5" fill="white" opacity="0.16" transform="rotate(-30 22 20)"/>
-      <path d="M24 28 Q28 17 32 28 Q28 39 24 28Z" fill="white" opacity="0.10"/>
-      <defs>
-        <radialGradient id="orb_g" cx="35%" cy="30%"><stop offset="0%" stopColor="#c4b5fd"/><stop offset="40%" stopColor="#7c3aed"/><stop offset="100%" stopColor="#2e1065"/></radialGradient>
-        <linearGradient id="orb_s" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#e9d5ff"/><stop offset="100%" stopColor="#7c3aed"/></linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
-function LingerySvg() {
-  return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-10 h-10 drop-shadow">
-      <path d="M12 18 Q16 12 28 14 Q40 12 44 18 L40 38 Q34 46 28 46 Q22 46 16 38Z" fill="url(#ln_g)" opacity="0.85"/>
-      <path d="M20 18 Q24 24 28 22 Q32 24 36 18" stroke="#fda4af" strokeWidth="1.3" fill="none" opacity="0.65"/>
-      <path d="M16 24 Q22 22 28 24 Q34 22 40 24" stroke="#fda4af" strokeWidth="0.7" fill="none" opacity="0.4" strokeDasharray="2 2"/>
-      <path d="M14 30 Q22 28 28 30 Q34 28 42 30" stroke="#fda4af" strokeWidth="0.7" fill="none" opacity="0.3" strokeDasharray="2 2"/>
-      <circle cx="28" cy="20" r="2" fill="#fda4af" opacity="0.5"/>
-      <defs>
-        <linearGradient id="ln_g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#3d1a1a"/><stop offset="100%" stopColor="#1c1917"/></linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
-function RopeSvg() {
-  return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-10 h-10 drop-shadow">
-      <path d="M8 17 Q16 11 24 19 Q32 27 40 21 Q48 15 50 23" stroke="url(#rp_g)" strokeWidth="4.5" fill="none" strokeLinecap="round"/>
-      <path d="M8 28 Q16 22 24 30 Q32 38 40 32 Q48 26 50 34" stroke="url(#rp_g2)" strokeWidth="4.5" fill="none" strokeLinecap="round"/>
-      <path d="M8 39 Q16 33 24 41 Q32 49 40 43" stroke="url(#rp_g)" strokeWidth="4.5" fill="none" strokeLinecap="round"/>
-      <circle cx="28" cy="28" r="6.5" fill="none" stroke="#fcd34d" strokeWidth="2.2" opacity="0.45"/>
-      <defs>
-        <linearGradient id="rp_g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#92400e"/><stop offset="100%" stopColor="#b45309"/></linearGradient>
-        <linearGradient id="rp_g2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#78350f"/><stop offset="100%" stopColor="#a16207"/></linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
-function CatEarsSvg() {
-  return (
-    <svg viewBox="0 0 56 56" fill="none" className="w-10 h-10 drop-shadow">
-      <polygon points="8,6 3,26 19,19" fill="url(#ce_g)" stroke="#c084fc" strokeWidth="1.2" strokeLinejoin="round"/>
-      <polygon points="48,6 53,26 37,19" fill="url(#ce_g)" stroke="#c084fc" strokeWidth="1.2" strokeLinejoin="round"/>
-      <polygon points="11,10 6,24 17,19" fill="#e9d5ff" opacity="0.35"/>
-      <polygon points="45,10 50,24 39,19" fill="#e9d5ff" opacity="0.35"/>
-      <ellipse cx="28" cy="40" rx="18" ry="12" fill="url(#ce_g2)" opacity="0.65"/>
-      <ellipse cx="21" cy="41" rx="2.5" ry="3" fill="#86efac" opacity="0.65"/>
-      <ellipse cx="35" cy="41" rx="2.5" ry="3" fill="#86efac" opacity="0.65"/>
-      <path d="M24 47 Q28 49 32 47" stroke="#f9a8d4" strokeWidth="1" fill="none"/>
-      <defs>
-        <linearGradient id="ce_g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#7e22ce"/><stop offset="100%" stopColor="#4c1d95"/></linearGradient>
-        <radialGradient id="ce_g2" cx="50%" cy="30%"><stop offset="0%" stopColor="#ede9fe"/><stop offset="100%" stopColor="#6d28d9"/></radialGradient>
-      </defs>
-    </svg>
-  );
-}
-
-const ITEM_SVG: Record<string, React.ReactNode> = {
-  rose_bouquet:  <RoseSvg />,
-  wine_bottle:   <WineSvg />,
-  diamond_ring:  <DiamondSvg />,
-  vip_pass:      <VipSvg />,
-  control_ball:  <OrbSvg />,
-  lace_lingerie: <LingerySvg />,
-  bondage_rope:  <RopeSvg />,
-  cat_ears:      <CatEarsSvg />,
-};
-
+// ── Item Art — real product photos with emoji fallback ─────────────────────
 function ItemArt({ itemId, emoji }: { itemId: string; emoji: string }) {
-  const svg = ITEM_SVG[itemId];
-  return svg ? <div className="flex-shrink-0">{svg}</div> : <span className="text-4xl select-none">{emoji}</span>;
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <span className="text-4xl select-none flex-shrink-0">{emoji}</span>;
+  }
+  return (
+    <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-white/5">
+      <img
+        src={`/shop/${itemId}.png`}
+        alt={itemId}
+        className="w-full h-full object-cover"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  );
 }
 
 // ── Flash badge ───────────────────────────────────────────────────────────────

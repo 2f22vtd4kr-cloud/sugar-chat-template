@@ -1,0 +1,62 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "GaIog5wywYoioVc9K_lfS"
+uri = "file://artifacts/companion-app/public/companions/elena-voss.png"
+type = "image"
+title = "elena mature confident woman"
+
+[[generated]]
+id = "pyTgV5TIlkroHSzYYl4ku"
+uri = "file://artifacts/companion-app/public/companions/mia-reyes.png"
+type = "image"
+title = "mia energetic college girl"
+
+[[generated]]
+id = "n8y0OqczQ0Fx1NJriL-Yl"
+uri = "file://artifacts/companion-app/public/companions/lilith-vex.png"
+type = "image"
+title = "lilith gothic dark woman"
+
+[[generated]]
+id = "QyCkocMGXFFcaYm23IvbC"
+uri = "file://artifacts/companion-app/public/companions/hana-sato.png"
+type = "image"
+title = "hana shy japanese woman"
+
+[[generated]]
+id = "IzvCyaft017KGQfe1boHk"
+uri = "file://artifacts/companion-app/public/companions/rhea-kane.png"
+type = "image"
+title = "rhea athletic fit woman"
+
+[[generated]]
+id = "-IoG_K-aistexqUiuXX-j"
+uri = "file://artifacts/companion-app/public/companions/raven-noir.png"
+type = "image"
+title = "raven gothic vampire woman"
+
+[[generated]]
+id = "-8iMJfXdndEfjU67z9RX2"
+uri = "file://artifacts/companion-app/public/companions/nya-miko.png"
+type = "image"
+title = "nya anime catgirl woman"
+
+[[generated]]
+id = "FE_IAoxe5BfhnN1OBbE0w"
+uri = "file://artifacts/companion-app/public/companions/sylvana-nightwhisper.png"
+type = "image"
+title = "sylvana dark elf sorceress"
+
+[[generated]]
+id = "EIf44qO3dOfg6xrXlqTtK"
+uri = "file://artifacts/companion-app/public/companions/victoria-hale.png"
+type = "image"
+title = "victoria ceo businesswoman"
+
+[[generated]]
+id = "_WK16L-2ULc-Nwimsq6qq"
+uri = "file://artifacts/companion-app/public/companions/sophie-laurent.png"
+type = "image"
+title = "sophie french housewife"

@@ -14,4 +14,5 @@ export const config = {
   adminPass: required("ADMIN_PASS"),
   databaseUrl: required("DATABASE_URL"),
   nodeEnv: process.env["NODE_ENV"] ?? "development",
+  miniAppUrl: process.env["MINI_APP_URL"] ?? "https://sugar-chat-template--levovychveniamy.replit.app",
 };

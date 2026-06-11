@@ -1,7 +1,7 @@
 import { Telegraf, Markup, type Context } from "telegraf";
 import { config } from "../lib/config.js";
 import { db, usersTable, companionsTable, conversationsTable, messagesTable, ledgerEntriesTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc, lt, isNull, or } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { textQueue } from "../queues/text-queue.js";
 import { imageQueue } from "../queues/image-queue.js";
@@ -60,6 +60,8 @@ async function upsertUser(telegramId: number, username?: string) {
   return user;
 }
 
+const MINI_APP_BASE = `https://t.me/${config.telegramBotUsername}/app`;
+
 // /start command
 bot.start(async (ctx) => {
   const { id, username } = ctx.from;
@@ -74,18 +76,17 @@ bot.start(async (ctx) => {
     return;
   }
 
-  const companions = sortCompanions(await db.select().from(companionsTable));
-  const companionButtons = companions.map((c) =>
-    [Markup.button.callback(companionButtonLabel(c.name, c.personality), `companion:${c.id}`)]
-  );
+  const name = user.username ? `@${user.username}` : "there";
 
   await ctx.reply(
-    `Welcome back${user.username ? `, @${user.username}` : ""}!\n\nYou have ${user.credits} credits.\n\nChoose a companion to chat with:`,
-    Markup.inlineKeyboard([
-      ...companionButtons,
-      [Markup.button.callback("⭐ Buy Credits with Stars", "buy_menu")],
-      [Markup.button.url("Open Web App", `https://t.me/${config.telegramBotUsername}/app`)],
-    ])
+    `✨ Welcome back, ${name}!\n\nYour companions are waiting for you.\n💎 Balance: ${user.credits} credits`,
+    Markup.keyboard([
+      [Markup.button.webApp("💜 Choose Character", `${MINI_APP_BASE}?startapp=companions`)],
+      [
+        Markup.button.webApp("👑 Subscription", `${MINI_APP_BASE}?startapp=plans`),
+        Markup.button.webApp("⚙️ Settings", `${MINI_APP_BASE}?startapp=settings`),
+      ],
+    ]).resize()
   );
 });
 
@@ -461,12 +462,118 @@ bot.on("text", async (ctx) => {
   await ctx.sendChatAction("typing");
 });
 
+// ── Daily Tarot Notification Job ─────────────────────────────────────────────
+
+async function sendDailyTarotToUser(user: typeof usersTable.$inferSelect): Promise<void> {
+  try {
+    // Find most-active companion conversation
+    const topConv = await db
+      .select({ companionId: conversationsTable.companionId })
+      .from(conversationsTable)
+      .where(eq(conversationsTable.userId, user.id))
+      .orderBy(desc(conversationsTable.affinity))
+      .limit(1)
+      .then((r) => r[0]);
+
+    if (!topConv) return;
+
+    const companion = await db
+      .select()
+      .from(companionsTable)
+      .where(eq(companionsTable.id, topConv.companionId))
+      .limit(1)
+      .then((r) => r[0]);
+
+    if (!companion) return;
+
+    const TAROT_CARDS = [
+      "The Star", "The Moon", "The Sun", "The Lovers", "The Empress",
+      "The High Priestess", "The Magician", "The Wheel of Fortune", "Strength",
+      "The Hermit", "The World", "Judgement", "The Tower", "The Devil",
+      "Temperance", "The Chariot", "Justice", "The Hierophant", "The Emperor",
+      "The Fool", "The Hanged Man", "Death",
+    ];
+    const card = TAROT_CARDS[Math.floor(Math.random() * TAROT_CARDS.length)];
+
+    // Generate reading via OpenRouter
+    const response = await fetch(`${config.openrouterBaseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${config.openrouterApiKey}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://sugarchat.app",
+        "X-Title": "Sugar Chat Daily Tarot",
+      },
+      body: JSON.stringify({
+        model: config.openrouterModel,
+        max_tokens: 200,
+        messages: [
+          {
+            role: "system",
+            content: `You are ${companion.name}. ${companion.systemPrompt}`,
+          },
+          {
+            role: "user",
+            content: `Generate a short, mystical and deeply romantic morning tarot reading. The card drawn is "${card}". Speak in your characteristic tone, weave in the card's intimate meaning, and end with one alluring question. Keep it under 180 words.`,
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) return;
+    const data = await response.json() as any;
+    const reading: string = data.choices?.[0]?.message?.content ?? "";
+    if (!reading) return;
+
+    const message = `🔮 *Good morning, darling...*\n\n*${companion.name}* drew **${card}** for you today:\n\n${reading}`;
+
+    await bot.telegram.sendMessage(Number(user.telegramId), message, { parse_mode: "Markdown" });
+
+    await db.update(usersTable).set({ lastTarotSentAt: new Date() }).where(eq(usersTable.id, user.id));
+
+    console.log(`[DailyTarot] Sent to user ${user.id} (${user.username}) card: ${card}`);
+  } catch (err) {
+    console.error(`[DailyTarot] Failed for user ${user.id}:`, err);
+  }
+}
+
+async function runDailyTarotJob(): Promise<void> {
+  try {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const eligible = await db
+      .select()
+      .from(usersTable)
+      .where(
+        and(
+          eq(usersTable.dailyTarotEnabled, true),
+          or(isNull(usersTable.lastTarotSentAt), lt(usersTable.lastTarotSentAt, cutoff))
+        )
+      )
+      .limit(50);
+
+    if (eligible.length > 0) {
+      console.log(`[DailyTarot] Processing ${eligible.length} users`);
+      for (const user of eligible) {
+        await sendDailyTarotToUser(user);
+        await new Promise((r) => setTimeout(r, 300)); // 300ms between sends
+      }
+    }
+  } catch (err) {
+    console.error("[DailyTarot] Job error:", err);
+  }
+}
+
 export function startBot(): void {
   bot.launch({ dropPendingUpdates: true }).then(() => {
     console.log("[Bot] Telegram bot started");
   }).catch((err) => {
     console.error("[Bot] Failed to start:", err);
   });
+
+  // Daily tarot job — runs every hour, sends to eligible users once per 24h
+  setInterval(runDailyTarotJob, 60 * 60 * 1000);
+  // First run after 2 minutes to let the bot settle
+  setTimeout(runDailyTarotJob, 2 * 60 * 1000);
 
   process.once("SIGINT", () => bot.stop("SIGINT"));
   process.once("SIGTERM", () => bot.stop("SIGTERM"));

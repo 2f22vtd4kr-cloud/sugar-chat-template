@@ -41,15 +41,16 @@ router.get("/me", requireTelegramAuth, async (req, res) => {
 
 // PATCH /api/users/me
 router.patch("/me", requireTelegramAuth, async (req, res) => {
-  const { adultConfirmed, language } = req.body as { adultConfirmed?: boolean; language?: string };
+  const { adultConfirmed, language, dailyTarotEnabled } = req.body as { adultConfirmed?: boolean; language?: string; dailyTarotEnabled?: boolean };
   const allowed = ["en", "es", "ru", "de", "it", "uk"];
   const updates: Partial<typeof usersTable.$inferInsert> & { updatedAt?: Date } = { updatedAt: new Date() };
   if (typeof adultConfirmed === "boolean") updates.adultConfirmed = adultConfirmed;
   if (language && allowed.includes(language)) updates.language = language;
+  if (typeof dailyTarotEnabled === "boolean") updates.dailyTarotEnabled = dailyTarotEnabled;
   if (typeof req.telegramPremium === "boolean") updates.isTelegramPremium = req.telegramPremium;
   await db.update(usersTable).set(updates).where(eq(usersTable.id, req.dbUserId!));
   const user = await db.select().from(usersTable).where(eq(usersTable.id, req.dbUserId!)).limit(1).then((r) => r[0]!);
-  res.json(serializeUser(user));
+  res.json({ ...serializeUser(user), dailyTarotEnabled: user.dailyTarotEnabled });
 });
 
 // GET /api/users/me/bonuses

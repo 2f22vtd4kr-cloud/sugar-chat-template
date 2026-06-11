@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, MessageSquare, Coins, Settings } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, ShoppingBag, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -16,7 +16,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     { href: "/", icon: LayoutDashboard, label: t("nav.home") },
     { href: "/companions", icon: Users, label: t("nav.explore") },
     { href: "/conversations", icon: MessageSquare, label: t("nav.chats") },
-    { href: "/credits", icon: Coins, label: t("nav.credits") },
+    { href: "/shop", icon: ShoppingBag, label: t("nav.shop") },
     { href: "/settings", icon: Settings, label: t("nav.settings") },
   ];
 

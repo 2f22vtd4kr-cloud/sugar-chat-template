@@ -15,6 +15,8 @@ export const usersTable = pgTable("users", {
   streakDays: integer("streak_days").notNull().default(0),
   lastLoginDate: text("last_login_date"), // "YYYY-MM-DD"
   birthDate: text("birth_date"), // "YYYY-MM-DD" — optional, for tarot astrology
+  dailyTarotEnabled: boolean("daily_tarot_enabled").notNull().default(true),
+  lastTarotSentAt: timestamp("last_tarot_sent_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -84,6 +86,15 @@ export const giftsTable = pgTable("gifts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const shopInventoryTable = pgTable("shop_inventory", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  itemId: text("item_id").notNull(),
+  itemName: text("item_name").notNull(),
+  creditsCost: integer("credits_cost").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const tarotReadingsTable = pgTable("tarot_readings", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
@@ -104,6 +115,7 @@ export const insertLedgerEntrySchema = createInsertSchema(ledgerEntriesTable).om
 export const insertSubscriptionSchema = createInsertSchema(subscriptionsTable).omit({ createdAt: true });
 export const insertGiftSchema = createInsertSchema(giftsTable).omit({ createdAt: true });
 export const insertTarotReadingSchema = createInsertSchema(tarotReadingsTable).omit({ createdAt: true });
+export const insertShopInventorySchema = createInsertSchema(shopInventoryTable).omit({ createdAt: true });
 
 export type User = typeof usersTable.$inferSelect;
 export type Companion = typeof companionsTable.$inferSelect;
@@ -113,6 +125,7 @@ export type LedgerEntry = typeof ledgerEntriesTable.$inferSelect;
 export type Subscription = typeof subscriptionsTable.$inferSelect;
 export type Gift = typeof giftsTable.$inferSelect;
 export type TarotReading = typeof tarotReadingsTable.$inferSelect;
+export type ShopInventory = typeof shopInventoryTable.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertCompanion = z.infer<typeof insertCompanionSchema>;

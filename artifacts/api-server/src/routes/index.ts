@@ -8,6 +8,7 @@ import ledgerRouter from "./ledger.js";
 import dashboardRouter from "./dashboard.js";
 import plansRouter from "./plans.js";
 import tarotRouter from "./tarot.js";
+import shopRouter from "./shop.js";
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use("/credits", ledgerRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/plans", plansRouter);
 router.use("/tarot", tarotRouter);
+router.use("/shop", shopRouter);
 
 export default router;

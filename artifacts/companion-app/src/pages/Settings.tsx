@@ -7,11 +7,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useTelegram } from "@/context/TelegramContext";
 import { SUPPORTED_LANGUAGES } from "@/i18n";
-import { User, Globe, Sparkles, Shield, ExternalLink } from "lucide-react";
+import { User, Globe, Sparkles, Shield, ExternalLink, Moon } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient as _useQueryClient } from "@tanstack/react-query";
 
 interface BonusSummary {
   hasPremiumAccess: boolean;
@@ -198,6 +198,44 @@ export default function Settings() {
                 <span>{t("settings.open_bot")}</span>
                 <ExternalLink className="w-4 h-4 text-muted-foreground" />
               </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Daily tarot toggle */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
+          <Card className="glass-card rounded-2xl overflow-hidden border-0">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Moon className="w-4 h-4 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{t("settings.daily_tarot_label")}</p>
+                    <p className="text-[11px] text-muted-foreground leading-tight">{t("settings.daily_tarot_desc")}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    haptic("medium");
+                    const newVal = !(user as any)?.dailyTarotEnabled ?? false;
+                    await fetch(`${import.meta.env.BASE_URL}api/users/me`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ dailyTarotEnabled: newVal }),
+                    });
+                    await qc.invalidateQueries({ queryKey: getGetMeQueryKey() });
+                  }}
+                  className={cn(
+                    "relative w-12 h-6 rounded-full transition-all duration-300 shrink-0",
+                    (user as any)?.dailyTarotEnabled !== false ? "bg-primary shadow-[0_0_12px_rgba(225,29,72,0.45)]" : "bg-white/10"
+                  )}
+                >
+                  <span className={cn(
+                    "absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all duration-300",
+                    (user as any)?.dailyTarotEnabled !== false ? "left-[26px]" : "left-0.5"
+                  )} />
+                </button>
+              </div>
             </CardContent>
           </Card>
         </motion.div>

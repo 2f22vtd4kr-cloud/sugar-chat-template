@@ -15,6 +15,7 @@ import Settings from "@/pages/Settings";
 import Plans from "@/pages/Plans";
 import ConversationDetail from "@/pages/ConversationDetail";
 import TarotPage from "@/pages/Tarot";
+import ShopPage from "@/pages/Shop";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/tarot/:companionId">
         {(params) => <TarotPage companionId={params.companionId} />}
       </Route>
+      <Route path="/shop" component={ShopPage} />
       <Route path="/credits" component={Credits} />
       <Route path="/plans" component={Plans} />
       <Route path="/settings" component={Settings} />

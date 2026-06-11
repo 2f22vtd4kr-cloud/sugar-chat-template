@@ -3,3 +3,4 @@
 - [Sugar Chat v8 Architecture](sugar-chat-v8.md) — Red Liquid Glass theme, NSFW gate, i18n, Stars subscriptions, dynamic pricing, whale recovery, inventory system — key decisions for this project.
 - [API client type patching](api-client-types.md) — Generated User type in dist/generated/api.schemas.d.ts AND src/generated/api.schemas.ts must both be patched when adding new backend fields; no codegen script exists.
 - [v8 TSC pre-existing errors](tsc-preexisting.md) — TS6305 (api-client-react dist not built) and TS7006 (implicit any in old pages) are pre-existing; ignore them when checking new file correctness.
+- [Telegraf webApp button URL](telegraf-webapp-url.md) — Markup.button.webApp() requires direct HTTPS app URL; t.me URLs cause BUTTON_URL_INVALID and kill polling. Use Markup.button.url() instead. Always add bot.catch() global handler.

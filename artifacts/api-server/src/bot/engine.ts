@@ -185,13 +185,13 @@ bot.start(async (ctx) => {
 
   await ctx.reply(
     welcomeText,
-    Markup.keyboard([
-      [Markup.button.webApp("💜 Select Companion", `${MINI_APP_BASE}?startapp=companions`)],
+    Markup.inlineKeyboard([
+      [Markup.button.url("💜 Open App", MINI_APP_BASE)],
       [
-        Markup.button.webApp("👑 Premium Subscription", `${MINI_APP_BASE}?startapp=plans`),
-        Markup.button.webApp("⚙️ Settings", `${MINI_APP_BASE}?startapp=settings`),
+        Markup.button.url("👑 Premium", `${MINI_APP_BASE}?startapp=plans`),
+        Markup.button.url("⚙️ Settings", `${MINI_APP_BASE}?startapp=settings`),
       ],
-    ]).resize()
+    ])
   );
 });
 
@@ -215,10 +215,10 @@ bot.command("help", async (ctx) => {
       parse_mode: "Markdown",
       ...Markup.inlineKeyboard([
         [
-          Markup.button.webApp("📱 Open Mini App", MINI_APP_BASE),
+          Markup.button.url("📱 Open Mini App", MINI_APP_BASE),
           Markup.button.callback("⭐ Buy Credits", "buy_menu"),
         ],
-        [Markup.button.webApp("👑 Get Subscription", `${MINI_APP_BASE}?startapp=plans`)],
+        [Markup.button.url("👑 Get Subscription", `${MINI_APP_BASE}?startapp=plans`)],
       ]),
     }
   );
@@ -401,7 +401,7 @@ bot.command("give_me_energy", async (ctx) => {
     {
       parse_mode: "Markdown",
       ...Markup.inlineKeyboard([
-        [Markup.button.webApp("💜 Start Chatting", MINI_APP_BASE)],
+        [Markup.button.url("💜 Start Chatting", MINI_APP_BASE)],
         [Markup.button.callback("⭐ Buy More Credits", "buy_menu")],
       ]),
     }
@@ -440,7 +440,7 @@ bot.command("energy", async (ctx) => {
       parse_mode: "Markdown",
       ...Markup.inlineKeyboard([
         [Markup.button.callback("⭐ Buy Credits with Stars", "buy_menu")],
-        [Markup.button.webApp("💎 Full Ledger", `${MINI_APP_BASE}?startapp=profile`)],
+        [Markup.button.url("💎 Full Ledger", `${MINI_APP_BASE}?startapp=profile`)],
       ]),
     }
   );
@@ -1097,6 +1097,12 @@ async function runDailyTarotJob(): Promise<void> {
     console.error("[DailyTarot] Job error:", err);
   }
 }
+
+// ── Global error handler — prevents a single handler crash from killing polling
+bot.catch((err, ctx) => {
+  console.error("[Bot] Handler error on update", ctx?.update?.update_id, err);
+  // Swallow the error — bot keeps running
+});
 
 // ── Bot startup ──────────────────────────────────────────────────────────────
 export function startBot(): void {

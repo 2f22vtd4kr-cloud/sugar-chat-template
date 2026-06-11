@@ -5,11 +5,47 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MessageCircle, Coins } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useTelegram } from "@/context/TelegramContext";
+import { useLocation } from "wouter";
+import { useState } from "react";
+
+function CompanionAvatar({ src, name }: { src: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+  const initials = name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  if (failed) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-rose-950 via-black to-rose-900">
+        <div className="text-4xl font-serif font-bold text-white/90 drop-shadow-[0_0_18px_rgba(244,63,94,0.45)]">{initials}</div>
+        <div className="text-[9px] tracking-[0.35em] uppercase text-white/35">Red Room</div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={name}
+      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 export default function Companions() {
   const { t } = useTranslation();
   const { haptic } = useTelegram();
+  const [, navigate] = useLocation();
   const { data: companions, isLoading } = useListCompanions({ query: { queryKey: getListCompanionsQueryKey() } });
+
+  const openConversation = (companionId: string) => {
+    haptic("medium");
+    navigate(`/conversations/${companionId}`);
+  };
 
   return (
     <AppLayout>
@@ -38,10 +74,17 @@ export default function Companions() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1 + i * 0.08, type: "spring", stiffness: 300, damping: 25 }}
               >
-                <div className="glass-card rounded-2xl overflow-hidden group cursor-pointer" onClick={() => haptic("light")}>
+                <div
+                  className="glass-card rounded-2xl overflow-hidden group cursor-pointer"
+                  onClick={() => openConversation(companion.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") openConversation(companion.id);
+                  }}
+                >
                   <div className="relative aspect-square">
-                    <img src={companion.avatarUrl} alt={companion.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <CompanionAvatar src={companion.avatarUrl} name={companion.name} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                       style={{ background: "radial-gradient(ellipse at bottom, rgba(225,29,72,0.22) 0%, transparent 70%)" }} />
@@ -56,9 +99,11 @@ export default function Companions() {
                       <span className="text-[10px] font-medium">{companion.creditCostText} {t("companions.cost_per_msg")}</span>
                     </div>
                     <button
+                      type="button"
+                      aria-label={`${t("companions.chat_now")} ${companion.name}`}
                       className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
                       style={{ background: "linear-gradient(135deg, hsl(348 76% 49%), hsl(351 88% 62%))", boxShadow: "0 0 10px rgba(225,29,72,0.4)" }}
-                      onClick={(e) => { e.stopPropagation(); haptic("medium"); (window as any).Telegram?.WebApp?.close(); }}
+                      onClick={(e) => { e.stopPropagation(); openConversation(companion.id); }}
                     >
                       <MessageCircle className="w-3.5 h-3.5 text-white" />
                     </button>

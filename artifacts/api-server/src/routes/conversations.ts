@@ -67,7 +67,7 @@ router.get("/", requireTelegramAuth, async (req, res) => {
 // GET /api/conversations/:companionId
 router.get("/:companionId", requireTelegramAuth, async (req, res) => {
   const userId = req.dbUserId!;
-  const companionId = String(req.params.companionId);
+  const companionId = String(req.params.companionId ?? "");
 
   const companion = await db.select().from(companionsTable).where(eq(companionsTable.id, companionId)).limit(1).then((r) => r[0]);
   if (!companion) { res.status(404).json({ error: "Companion not found" }); return; }
@@ -98,7 +98,7 @@ router.get("/:companionId", requireTelegramAuth, async (req, res) => {
 // POST /api/conversations/:companionId/gift — send a virtual gift
 router.post("/:companionId/gift", requireTelegramAuth, async (req, res) => {
   const userId = req.dbUserId!;
-  const companionId = String(req.params.companionId);
+  const companionId = String(req.params.companionId ?? "");
   const { giftType } = req.body as { giftType: string };
 
   const gift = GIFTS[giftType as keyof typeof GIFTS];
@@ -148,7 +148,7 @@ router.post("/:companionId/gift", requireTelegramAuth, async (req, res) => {
 // GET /api/conversations/:companionId/milestones
 router.get("/:companionId/milestones", requireTelegramAuth, async (req, res) => {
   const userId = req.dbUserId!;
-  const companionId = String(req.params.companionId);
+  const companionId = String(req.params.companionId ?? "");
 
   const conversation = await db.select().from(conversationsTable)
     .where(and(eq(conversationsTable.userId, userId), eq(conversationsTable.companionId, companionId)))

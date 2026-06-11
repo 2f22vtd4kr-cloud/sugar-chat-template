@@ -8,7 +8,7 @@ const router = Router();
 // GET /api/conversations/:companionId/messages
 router.get("/:companionId/messages", requireTelegramAuth, async (req, res) => {
   const userId = req.dbUserId!;
-  const companionId = String(req.params.companionId);
+  const companionId = String(req.params.companionId ?? "");
 
   const conversation = await db
     .select()

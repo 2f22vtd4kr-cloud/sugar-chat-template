@@ -146,16 +146,35 @@ bot.on("message", async (ctx, next) => {
     const payment = msg.successful_payment;
     if (payment.currency !== "XTR") return next();
 
-    const packageId = payment.invoice_payload as string;
-    const pkg = STARS_PACKAGES[packageId];
+    const payload = payment.invoice_payload as string;
+    const paymentId = payment.telegram_payment_charge_id ?? randomUUID();
+    const { id: telegramId, username } = ctx.from!;
+    const user = await upsertUser(telegramId, username);
+
+    // Subscription payment
+    if (payload.startsWith("sub:")) {
+      const planId = payload.slice(4);
+      try {
+        const { activateSubscription } = await import("../routes/plans.js");
+        await activateSubscription(user.id, planId, paymentId);
+        const planNames: Record<string, string> = { weekly: "Weekly Pass", monthly: "Monthly VIP" };
+        await ctx.reply(
+          `✅ Subscription activated!\n\nYour ${planNames[planId] ?? planId} is now active.\n\nEnjoy unlimited chats! Use /start to continue.`
+        );
+      } catch (err) {
+        console.error("[Bot] Subscription activation failed:", err);
+        await ctx.reply("Payment received. Your subscription is being activated. Please wait a moment.");
+      }
+      return;
+    }
+
+    // Credit pack payment
+    const pkg = STARS_PACKAGES[payload];
 
     if (!pkg) {
       await ctx.reply("Payment received but package not found. Please contact support.");
       return;
     }
-
-    const { id: telegramId, username } = ctx.from!;
-    const user = await upsertUser(telegramId, username);
 
     await db.transaction(async (tx) => {
       await tx
@@ -168,7 +187,7 @@ bot.on("message", async (ctx, next) => {
         userId: user.id,
         amount: pkg.credits,
         type: "DEPOSIT",
-        referenceId: payment.telegram_payment_charge_id ?? randomUUID(),
+        referenceId: paymentId,
         description: `${pkg.label} — ${pkg.credits} credits (${pkg.stars} ⭐ Stars)`,
       });
     });

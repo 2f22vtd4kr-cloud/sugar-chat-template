@@ -14,8 +14,13 @@ export interface User {
   telegramId: string;
   /** @nullable */
   username?: string | null;
+  /** @nullable */
+  firstName?: string | null;
   credits: number;
   freeImagesSent: number;
+  language: string;
+  adultConfirmed: boolean;
+  isTelegramPremium: boolean;
   createdAt: string;
 }
 

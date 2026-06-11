@@ -1,2 +1,4 @@
 - [Redis TLS fix](redis-tls.md) — pass rediss:// URL string directly to ioredis; never manually parse. ECONNRESET = TLS mismatch.
 - [Telegram Stars payments](telegram-stars.md) — currency "XTR", provider_token "", handled in bot's successful_payment handler; createInvoiceLink for Mini App openInvoice.
+- [Sugar Chat v7 Architecture](sugar-chat-v7.md) — Red Liquid Glass theme, NSFW gate, i18n, Stars subscriptions — key decisions for this project.
+- [API client type patching](api-client-types.md) — Generated User type in dist/generated/api.schemas.d.ts AND src/generated/api.schemas.ts must both be patched when adding new backend fields; no codegen script exists.

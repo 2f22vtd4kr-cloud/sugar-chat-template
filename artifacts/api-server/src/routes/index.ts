@@ -6,6 +6,7 @@ import conversationsRouter from "./conversations.js";
 import messagesRouter from "./messages.js";
 import ledgerRouter from "./ledger.js";
 import dashboardRouter from "./dashboard.js";
+import plansRouter from "./plans.js";
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use("/conversations", messagesRouter);
 router.use("/ledger", ledgerRouter);
 router.use("/credits", ledgerRouter);
 router.use("/dashboard", dashboardRouter);
+router.use("/plans", plansRouter);
 
 export default router;

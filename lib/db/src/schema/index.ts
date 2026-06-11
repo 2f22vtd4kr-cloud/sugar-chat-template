@@ -1,4 +1,4 @@
-import { pgTable, text, integer, bigint, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, bigint, timestamp, uniqueIndex, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -6,8 +6,12 @@ export const usersTable = pgTable("users", {
   id: text("id").primaryKey(),
   telegramId: bigint("telegram_id", { mode: "bigint" }).notNull().unique(),
   username: text("username"),
+  firstName: text("first_name"),
   credits: integer("credits").notNull().default(10),
   freeImagesSent: integer("free_images_sent").notNull().default(0),
+  language: text("language").notNull().default("en"),
+  adultConfirmed: boolean("adult_confirmed").notNull().default(false),
+  isTelegramPremium: boolean("is_telegram_premium").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -21,6 +25,7 @@ export const companionsTable = pgTable("companions", {
   greetingText: text("greeting_text").notNull(),
   creditCostText: integer("credit_cost_text").notNull().default(1),
   creditCostImg: integer("credit_cost_img").notNull().default(3),
+  tags: text("tags").default(""),
 });
 
 export const conversationsTable = pgTable("conversations", {
@@ -54,19 +59,33 @@ export const ledgerEntriesTable = pgTable("ledger_entries", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const subscriptionsTable = pgTable("subscriptions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  planId: text("plan_id").notNull(), // 'weekly' | 'monthly'
+  starsPaymentId: text("stars_payment_id").unique(),
+  startsAt: timestamp("starts_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at").notNull(),
+  status: text("status").notNull().default("active"), // 'active' | 'expired' | 'cancelled'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(usersTable).omit({ createdAt: true, updatedAt: true });
 export const insertCompanionSchema = createInsertSchema(companionsTable);
 export const insertConversationSchema = createInsertSchema(conversationsTable).omit({ createdAt: true, updatedAt: true });
 export const insertMessageSchema = createInsertSchema(messagesTable).omit({ createdAt: true });
 export const insertLedgerEntrySchema = createInsertSchema(ledgerEntriesTable).omit({ createdAt: true });
+export const insertSubscriptionSchema = createInsertSchema(subscriptionsTable).omit({ createdAt: true });
 
 export type User = typeof usersTable.$inferSelect;
 export type Companion = typeof companionsTable.$inferSelect;
 export type Conversation = typeof conversationsTable.$inferSelect;
 export type Message = typeof messagesTable.$inferSelect;
 export type LedgerEntry = typeof ledgerEntriesTable.$inferSelect;
+export type Subscription = typeof subscriptionsTable.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertCompanion = z.infer<typeof insertCompanionSchema>;
 export type InsertConversation = z.infer<typeof insertConversationSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type InsertLedgerEntry = z.infer<typeof insertLedgerEntrySchema>;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;

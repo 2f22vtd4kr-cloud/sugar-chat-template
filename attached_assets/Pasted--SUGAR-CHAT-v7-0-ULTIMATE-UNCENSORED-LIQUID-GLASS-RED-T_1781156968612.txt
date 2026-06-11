@@ -1,0 +1,93 @@
+# 🚀 SUGAR CHAT v7.0 — ULTIMATE UNCENSORED LIQUID GLASS RED-THEMED NSFW AI COMPANION PLATFORM
+
+## ROLE & MISSION
+
+You are a senior full-stack TypeScript engineer, product designer, and NSFW AI specialist. Transform the monorepo into the most premium, addictive, fully uncensored adult AI companion platform:
+
+**https://github.com/2f22vtd4kr-cloud/sugar-chat-template**
+
+**v7.0 Highlights**:
+- **Liquid Glass Design**: Modern glassmorphism with fluid translucent layers, vibrant red/crimson accents (#E11D48 primary, neon glows, blur effects, subtle animations).
+- **All Non-Paid Features Implemented**: Dynamic i18n, Telegram Stars subscriptions, Telegram Premium perks, NSFW warning modal, multi-language, subscriptions/settings pages, streaming chat, affinity/gifts, etc.
+- **Fresh Differentiated UI**: Not a copy of Lucid Dreams — more fluid, premium, sensual with liquid-like transitions.
+- Full Telegram Mini App + Bot experience.
+
+**Core Philosophy**:
+- **NSFW-First**: Explicit content, zero censorship.
+- **Liquid Glass Aesthetic**: Heavy use of `backdrop-filter: blur()`, semi-transparent cards, vibrant red gradients, smooth Framer Motion liquid-like entrances.
+- **Multi-Language**: EN, ES, UK, DE, IT, RU with react-i18next.
+- **Monetization**: Telegram Stars for subscriptions/credits/gifts.
+
+**Strict Rules**:
+- Use tools for analysis and edits.
+- Incremental, testable changes with .bak backups.
+- Test NSFW flows, i18n, Stars simulation, Premium detection.
+- No paid external services (ElevenLabs voice remains feature-flagged/off by default).
+
+---
+
+## PHASE 0 — FULL ANALYSIS (MANDATORY)
+
+Use tools to explore repo, read key files, trace flows. Output detailed report including current UI state.
+
+---
+
+## PHASE 1 — DATABASE SCHEMA
+
+Extend for all features: language, adultConfirmed, isTelegramPremium, subscriptions, etc.
+
+---
+
+## PHASE 2 — i18n (Refined Dynamic JSON)
+
+`artifacts/companion-app/src/locales/{lang}.json` with namespaces (common, nsfwWarning, subscription, settings, chat, companions, etc.). Comprehensive keys for all strings.
+
+---
+
+## PHASE 3 — react-i18next Dynamic Loading
+
+Install/setup `react-i18next` + `i18next-browser-languagedetector`. Dynamic JSON imports, language switcher in Settings that persists to DB and reloads UI.
+
+---
+
+## PHASE 4 — LIQUID GLASS UI SYSTEM
+
+Update Tailwind + CSS:
+- Glassmorphism: `backdrop-blur-xl`, semi-transparent bg with borders/glows in red spectrum.
+- Fluid animations: Framer Motion with spring physics for cards, modals, message bubbles.
+- Red theme: Primary #E11D48, accents #F43F5E, dark backgrounds with subtle particle/liquid effects (CSS or canvas if lightweight).
+- Global currency bar, bottom nav with glass effect.
+
+---
+
+## PHASE 5 — TELEGRAM STARS SUBSCRIPTIONS
+
+Full integration: Plans page with Most Popular, benefits, Stars invoice creation, webhook handling, success animations.
+
+---
+
+## PHASE 6 — TELEGRAM PREMIUM & NSFW MODAL
+
+- Detect `is_premium` from initData → bonuses (extra energy, badge, priority).
+- First-launch explicit NSFW modal (full-screen glass overlay with confirmation).
+
+---
+
+## PHASE 7 — ADDITIONAL UI IMPROVEMENTS
+
+- Immersive chat with liquid message animations, typing indicators.
+- Enhanced characters grid with glass cards + hover glows.
+- Gift shop with fluid purchase flow.
+- Settings & Subscriptions pages matching reference intent but in Liquid Glass red style.
+- Haptics on all interactions.
+- Optimistic updates everywhere.
+
+---
+
+## PHASE 8 — BOT, SEEDS, HARDENING
+
+Multi-lang bot, hot companion seeds, AI pipeline with refusal handling, tests, deployment docs.
+
+**After every change, output the FULL updated prompt like this one.**
+
+**Begin with Phase 0 analysis.**

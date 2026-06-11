@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { validateTelegramInitData, parseInitDataDev, type TelegramUser } from "../lib/telegram-auth.js";
+import { validateTelegramInitData, type TelegramUser } from "../lib/telegram-auth.js";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -14,6 +14,22 @@ declare global {
   }
 }
 
+function extractTelegramUserFields(initData: string): { isPremium: boolean; firstName?: string; languageCode?: string } {
+  try {
+    const params = new URLSearchParams(initData);
+    const userStr = params.get("user");
+    if (!userStr) return { isPremium: false };
+    const tgUser = JSON.parse(decodeURIComponent(userStr));
+    return {
+      isPremium: tgUser.is_premium === true,
+      firstName: tgUser.first_name ?? undefined,
+      languageCode: tgUser.language_code ?? undefined,
+    };
+  } catch {
+    return { isPremium: false };
+  }
+}
+
 export async function requireTelegramAuth(
   req: Request,
   res: Response,
@@ -22,9 +38,11 @@ export async function requireTelegramAuth(
   const initData = req.headers["x-telegram-init-data"] as string | undefined;
 
   let telegramUser: TelegramUser | undefined;
+  let isPremium = false;
+  let firstName: string | undefined;
+  let languageCode: string | undefined;
 
   if (config.nodeEnv === "development") {
-    // In dev mode: use mock user for any request (real or missing initData)
     telegramUser = { id: 1234567890, username: "dev_user", first_name: "Dev" };
   } else {
     if (!initData) {
@@ -38,6 +56,10 @@ export async function requireTelegramAuth(
         return;
       }
       telegramUser = parsed.user;
+      const extra = extractTelegramUserFields(initData);
+      isPremium = extra.isPremium;
+      firstName = extra.firstName;
+      languageCode = extra.languageCode;
     } catch {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -49,7 +71,6 @@ export async function requireTelegramAuth(
     return;
   }
 
-  // Upsert user in DB
   const telegramIdBigInt = BigInt(telegramUser.id);
   let user = await db
     .select()
@@ -60,19 +81,26 @@ export async function requireTelegramAuth(
 
   if (!user) {
     const newId = randomUUID();
+    const defaultLang = languageCode?.startsWith("ru") ? "ru"
+      : languageCode?.startsWith("uk") ? "uk"
+      : languageCode?.startsWith("de") ? "de"
+      : languageCode?.startsWith("it") ? "it"
+      : languageCode?.startsWith("es") ? "es"
+      : "en";
     await db.insert(usersTable).values({
       id: newId,
       telegramId: telegramIdBigInt,
       username: telegramUser.username ?? null,
+      firstName: firstName ?? telegramUser.first_name ?? null,
       credits: 10,
       freeImagesSent: 0,
+      isTelegramPremium: isPremium,
+      language: defaultLang,
     });
-    user = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, newId))
-      .limit(1)
-      .then((rows) => rows[0]);
+    user = await db.select().from(usersTable).where(eq(usersTable.id, newId)).limit(1).then((rows) => rows[0]);
+  } else if (isPremium !== user.isTelegramPremium) {
+    // Keep Premium status in sync
+    await db.update(usersTable).set({ isTelegramPremium: isPremium, updatedAt: new Date() }).where(eq(usersTable.id, user.id));
   }
 
   req.telegramUser = telegramUser;

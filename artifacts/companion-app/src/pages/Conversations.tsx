@@ -1,100 +1,89 @@
 import { useListConversations, getListConversationsQueryKey } from "@workspace/api-client-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 export default function Conversations() {
+  const { t } = useTranslation();
   const { data: conversations, isLoading } = useListConversations({ query: { queryKey: getListConversationsQueryKey() } });
 
   return (
     <AppLayout>
-      <div className="p-4 pt-8 space-y-6">
-        <header className="space-y-2">
-          <motion.h1 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-serif text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"
-          >
-            Chats
-          </motion.h1>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-muted-foreground text-sm"
-          >
-            Your ongoing conversations and bonds.
-          </motion.p>
-        </header>
+      <div className="p-4 pt-8 space-y-5">
+        <motion.header initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-1">
+          <h1 className="text-3xl font-serif text-gradient-red">{t("conversations.title")}</h1>
+          <p className="text-muted-foreground text-sm">{t("conversations.subtitle")}</p>
+        </motion.header>
 
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {isLoading ? (
             Array(4).fill(0).map((_, i) => (
-              <Card key={i} className="bg-card/50 border-white/5">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <Skeleton className="w-14 h-14 rounded-full" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-5 w-1/3" />
-                    <Skeleton className="h-4 w-full" />
-                  </div>
-                </CardContent>
-              </Card>
+              <div key={i} className="glass-card rounded-2xl p-4 flex items-center gap-3">
+                <Skeleton className="w-14 h-14 rounded-full bg-white/5" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-1/3 bg-white/5" />
+                  <Skeleton className="h-3 w-3/4 bg-white/5" />
+                </div>
+              </div>
             ))
-          ) : conversations?.length === 0 ? (
-            <div className="text-center p-12 bg-card/30 rounded-2xl border border-white/5 flex flex-col items-center">
-              <MessageSquare className="w-12 h-12 text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground text-sm">No conversations yet.</p>
+          ) : !conversations?.length ? (
+            <div className="text-center p-12 glass-card rounded-2xl flex flex-col items-center gap-3">
+              <MessageSquare className="w-10 h-10 text-muted-foreground/40" />
+              <p className="text-muted-foreground text-sm">{t("conversations.no_conversations")}</p>
             </div>
           ) : (
             conversations?.map((conv, i) => (
               <motion.div
                 key={conv.id}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + i * 0.1 }}
+                transition={{ delay: 0.1 + i * 0.07, type: "spring", stiffness: 300, damping: 28 }}
               >
-                <Card className="bg-card/50 border-white/5 hover:bg-card/80 transition-colors cursor-pointer relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="relative">
-                      <img 
-                        src={conv.companion.avatarUrl} 
-                        alt={conv.companion.name} 
-                        className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
-                      />
-                      <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5">
-                        <div className="bg-primary/20 rounded-full p-1 flex items-center justify-center">
-                          <Heart className="w-3 h-3 text-primary" />
-                        </div>
-                      </div>
+                <div className="glass-card rounded-2xl p-3.5 flex items-center gap-3 cursor-pointer hover:brightness-110 transition-all duration-200 group relative overflow-hidden">
+                  {/* hover glow */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{ background: "linear-gradient(135deg, rgba(225,29,72,0.05), transparent)" }} />
+
+                  <div className="relative flex-shrink-0">
+                    <img src={conv.companion.avatarUrl} alt={conv.companion.name}
+                      className="w-13 h-13 w-[52px] h-[52px] rounded-full object-cover border-2"
+                      style={{ borderColor: "rgba(225,29,72,0.3)" }} />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center"
+                      style={{ background: "linear-gradient(135deg, hsl(348 76% 49%), hsl(351 88% 62%))" }}>
+                      <Heart className="w-2.5 h-2.5 text-white fill-white" />
                     </div>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-serif font-medium text-foreground text-base">{conv.companion.name}</h3>
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate mt-1">
-                        {conv.lastMessage || conv.companion.greetingText}
-                      </p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <div className="h-1 flex-1 bg-background rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-gradient-to-r from-primary/50 to-primary rounded-full transition-all duration-1000" 
-                            style={{ width: `${conv.affinity}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] font-medium text-primary w-6 text-right">
-                          {conv.affinity}
-                        </span>
-                      </div>
+                  </div>
+
+                  <div className="flex-1 overflow-hidden">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-serif font-medium text-sm">{conv.companion.name}</h3>
+                      <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                        {formatDistanceToNow(new Date(conv.updatedAt), { addSuffix: true })}
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {conv.lastMessage || conv.companion.greetingText}
+                    </p>
+                    {/* Affinity bar */}
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                        <motion.div
+                          className="h-full rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${conv.affinity}%` }}
+                          transition={{ duration: 1.2, delay: 0.3 + i * 0.07, ease: "easeOut" }}
+                          style={{ background: "linear-gradient(90deg, hsl(348 76% 40%), hsl(351 88% 62%))" }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-bold w-5 text-right" style={{ color: "hsl(348 76% 65%)" }}>
+                        {conv.affinity}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             ))
           )}

@@ -13,6 +13,7 @@ import Conversations from "@/pages/Conversations";
 import Credits from "@/pages/Credits";
 import Settings from "@/pages/Settings";
 import Plans from "@/pages/Plans";
+import ConversationDetail from "@/pages/ConversationDetail";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -58,6 +59,9 @@ function Router() {
       <Route path="/" component={Dashboard} />
       <Route path="/companions" component={Companions} />
       <Route path="/conversations" component={Conversations} />
+      <Route path="/conversations/:companionId">
+        {(params) => <ConversationDetail companionId={params.companionId} />}
+      </Route>
       <Route path="/credits" component={Credits} />
       <Route path="/plans" component={Plans} />
       <Route path="/settings" component={Settings} />

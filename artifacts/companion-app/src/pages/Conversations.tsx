@@ -2,13 +2,22 @@ import { useListConversations, getListConversationsQueryKey } from "@workspace/a
 import { AppLayout } from "@/components/layout/AppLayout";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Heart, MessageSquare } from "lucide-react";
+import { Heart, MessageSquare, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "wouter";
+import { useTelegram } from "@/context/TelegramContext";
 
 export default function Conversations() {
   const { t } = useTranslation();
+  const { haptic } = useTelegram();
+  const [, navigate] = useLocation();
   const { data: conversations, isLoading } = useListConversations({ query: { queryKey: getListConversationsQueryKey() } });
+
+  const openConversation = (companionId: string) => {
+    haptic("light");
+    navigate(`/conversations/${companionId}`);
+  };
 
   return (
     <AppLayout>
@@ -42,7 +51,10 @@ export default function Conversations() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 + i * 0.07, type: "spring", stiffness: 300, damping: 28 }}
               >
-                <div className="glass-card rounded-2xl p-3.5 flex items-center gap-3 cursor-pointer hover:brightness-110 transition-all duration-200 group relative overflow-hidden">
+                <div
+                  className="glass-card rounded-2xl p-3.5 flex items-center gap-3 cursor-pointer hover:brightness-110 transition-all duration-200 group relative overflow-hidden"
+                  onClick={() => openConversation(conv.companionId)}
+                >
                   {/* hover glow */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                     style={{ background: "linear-gradient(135deg, rgba(225,29,72,0.05), transparent)" }} />
@@ -83,6 +95,8 @@ export default function Conversations() {
                       </span>
                     </div>
                   </div>
+
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 group-hover:text-primary/60 transition-colors duration-200" />
                 </div>
               </motion.div>
             ))

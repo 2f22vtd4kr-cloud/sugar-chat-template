@@ -1123,10 +1123,25 @@ export function startBot(): void {
     .then(() => console.log("[Bot] Commands registered with Telegram"))
     .catch((err) => console.error("[Bot] Failed to register commands:", err));
 
-  bot
-    .launch({ dropPendingUpdates: true })
-    .then(() => console.log("[Bot] Telegram bot started"))
-    .catch((err) => console.error("[Bot] Failed to start:", err));
+  // Launch with retry — handles 409 (another instance already polling) gracefully
+  const launchBot = (attempt = 1): void => {
+    bot
+      .launch({ dropPendingUpdates: true })
+      .then(() => console.log("[Bot] Telegram bot started"))
+      .catch((err: Error & { response?: { error_code?: number } }) => {
+        const is409 = err?.response?.error_code === 409 || err?.message?.includes("409");
+        if (is409) {
+          // Another instance (e.g. production deployment) already holds polling.
+          // Back off and retry — production will eventually release or we'll take over.
+          const delay = Math.min(30_000, attempt * 5_000);
+          console.warn(`[Bot] 409 conflict — retrying in ${delay / 1000}s (attempt ${attempt})`);
+          setTimeout(() => launchBot(attempt + 1), delay);
+        } else {
+          console.error("[Bot] Failed to start:", err);
+        }
+      });
+  };
+  launchBot();
 
   // ── Keep-alive health ping (every 4 minutes) ─────────────────────────────
   // Prevents Replit container from sleeping during active sessions

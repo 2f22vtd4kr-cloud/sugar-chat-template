@@ -36,6 +36,11 @@ app.get("/api", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// Keep-alive health endpoint (pinged every 4 min by the bot to prevent sleep)
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", ts: Date.now() });
+});
+
 app.use("/api", router);
 
 export default app;

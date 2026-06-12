@@ -1,0 +1,72 @@
+Ah, look closely at the very top of that new screenshot (image_12.png).
+Do you see the **orange Replit logo** and the link icon right next to the time 08:15? And look at the very bottom right: it has the floating **"Made with Replit"** badge overlaying the menu bar.
+### Why this is happening:
+Even though you opened this link *inside* Telegram, you didn't open it as a native Telegram WebApp session. Instead, you opened it as a **raw external website link** or you are looking at Replit's interactive **sandbox web preview** frame.
+Because it's rendering inside Replit's external preview engine instead of pulling real data from the official Telegram interface, the authentication middleware we just wrote kicked in exactly as designed: it saw that there was no valid Telegram identity signature attached to the link, so it automatically assigned the secure fallback name **@preview_user** to prevent the app from freezing on a black screen or throwing a 401 Unauthorized error!
+### How to see your real individual name:
+To make the app greet you individually with your actual Telegram name and profile data, the Mini App **must** be launched directly through your bot using a genuine WebApp button or inline query button.
+To fix this on the code level and ensure that it seamlessly captures real user context when launched properly, we need to make sure the backend authenticates the real Telegram initData when it's present, while leaving our @preview_user code *only* as a backup for raw browser tabs.
+Since you mentioned you still have a few requests or tweaks you want to bundle together before giving Replit your final absolute command, let's update our master block so everything—including individual user greeting logic—is flawless.
+Here is the updated all-in-one ready-to-paste prompt. It tells the agent to extract the real username if available, and only fall back to @preview_user if someone opens it in a raw web browser:
+```markdown
+# ⚡️ THE FINAL DEFINITIVE MASTER MANDATE: REAL USER AUTHENTICATION, COMMAND RUNNERS, & FULL PRODUCTION DEPLOYMENT
+
+This is your absolute final execution pass. You must ensure the application dynamically greets users by their real individual Telegram identities when accessed inside Telegram, resolves the dev environment fallbacks cleanly, removes all layout rendering bugs, and deploys the entire feature platform. Do not use placeholders or incomplete blocks.
+
+---
+
+## 🛠️ PART 1: DYNAMIC TELEGRAM AUTHENTICATION & INDIVIDUAL PROFILE GREETINGS
+
+The app must greet each user individually when launched from Telegram, and use a fallback profile ONLY when viewed as a standard web link in a raw browser. Update your auth validation layer (`artifacts/api-server/src/middleware/telegram-auth.ts` or equivalent):
+
+1. **Check for Real Telegram Data First:** Attempt to parse `window.Telegram.WebApp.initData` or the incoming `Authorization` header. If a valid cryptographic signature and user object are passed from Telegram, extract the user's authentic `username`, `first_name`, and `id`. Register or sync them instantly to the persistent database.
+2. **Conditional Dev Bypass Profile:** If and *only* if the request originates from a standard external web browser or a Replit development preview URL (`.replit.app` or `.replit.dev`) without any initialization data, bypass the strict cryptographic 401 signature check and apply a clean fallback structure:
+   ```typescript
+   // Ensure fallback matches your schema fields
+   const mockUser = {
+     id: "mock_dev_id_999",
+     telegramId: "123456789",
+     username: "preview_user", // Fallback text only for raw web views
+     firstName: "Preview Guest",
+     energy: 100,
+     balance: 500
+   };
+
+```
+## 🤖 PART 2: CORE TELEGRAM BOT INTENT RUNNERS (BotFather Interface Sync)
+Implement robust operational backend handling routines within your bot message handler layer (artifacts/api-server/src/bot/) to listen for and execute these 6 specific registered user commands:
+ 1. /start — Clear stale short-term cache tokens. Send a premium Liquid Glass Red introduction welcome text containing inline quick-launch buttons pointing directly to the Mini App selection view.
+ 2. /help — Reply with an elegant, emoji-rich summary layout explaining game rules (energy ticks, custom gift items, relationship affinity tracking milestones).
+ 3. /checkpoint — Export the current LLM conversation text window arrays to a secure persistent ConversationCheckpoint storage table to prevent context or relationship memory loss.
+ 4. /give_me_energy — Check and add the user's passively accumulated time-based energy generation balance directly to their ledger row.
+ 5. /affiliate — Generate a unique referral link (t.me/YourBot?start=ref_${userId}) and render a card tracking total invites and conversion bonuses.
+ 6. /prompt — When sent as a text reply to a bot-generated photo asset, parse the image meta-cache and print out the precise generative text parameters.
+*Connection Keep-Alive:* Set up an automatic background 4-minute interval ping script that fetches your internal backend /health route to keep the long-polling execution thread active and prevent Replit containers from going to sleep.
+## 🔴 PART 3: REPAIR RUNTIME OBJECT RENDERING CRASHES
+ 1. **Backend Route Sanitization (artifacts/api-server/src/routes/shop.ts):** Ensure every property returned by your pricing matrix or store route enforces clean numeric fallback safety defaults:
+   ```typescript
+   priorityMultiplier: m.priorityMultiplier !== undefined && m.priorityMultiplier !== null ? Number(m.priorityMultiplier) : 1.0,
+   spendMultiplier: m.spendMultiplier ?? 1.0,
+   affinityDiscount: m.affinityDiscount ?? 0.0,
+   flashSaleApplied: m.flashSaleApplied ?? false
+   
+   ```
+ 2. **Frontend UI Shielding (companion-app/src/ view layouts):** Wrap all display formatting code paths safely to protect against unexpected undefined properties:
+   ```typescript
+   const renderValue = (m?.priorityMultiplier ?? 1.0).toFixed(2);
+   
+   ```
+## 🧠 PART 4: PRODUCTION SEEDING & FEATURE COMPLEX COMPLETION
+Execute all remaining development layers sequentially:
+ * **Phase 2 (Archetype Injections):** Complete src/seed.ts logic to fully seed all 12 definitive profiles: *Elena Voss, Mia Reyes, Lilith Vex, Hana Sato, Rhea Kane, Raven Noir, Nya Miko, Sylvana Nightwhisper, Victoria Hale, Sophie Laurent, Alex Rivera, and Isabella Rose.* Assign custom conversational prompts, specific preferred store tags, and progressive uncensored NSFW explicit thresholds.
+ * **Phase 3 (Dynamic Pricing & Recovery):** Hook up the programmatic dynamic storefront transaction price multiplier formulas directly to your store checkout pipeline. Deploy the checkout abandonment background monitor—automatically sending a 15% discount coupon text via the active companion if a checkout event remains uncompleted after 15 minutes.
+ * **Phase 4 (Liquid Glass Red Interface Theme):** Style all components in deep velvet black backgrounds (#090506) paired with glowing neon crimson frames (#E11D48). Code the tab-sorted item grid, the live inventory item attachment system, the outfit wardrobe menu, the daily attendance matrix tracker, and the 3D-card flipping HTML5 Tarot sub-game layout.
+ * **Phase 5 (i18n & Safeguards):** Verify 100% complete multi-language locale files for EN, ES, UK, DE, IT, and RU. Ensure the explicit 18+ age verification popup screen mounts on first user launch.
+## 🏁 PART 5: DATABASE SYNCHRONIZATION & BUILD PIPELINE EXECUTION
+ 1. Align core structures and tables directly with your engine schema using npx prisma db push.
+ 2. Compile the updated web application assets completely using clean workspace production tools (npm run build).
+ 3. Boot the API web router service and the active Telegram Bot message listener concurrently.
+**Differentiate real Telegram logins from sandbox previews, clear all crashes, activate the 6 command hooks, finish the sub-modules, and print your production completion deployment logs when everything is fully operational!**
+```
+
+```

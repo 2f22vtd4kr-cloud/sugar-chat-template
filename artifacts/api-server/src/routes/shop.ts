@@ -124,10 +124,15 @@ router.get("/items", async (req, res) => {
       const { finalPrice } = await computeDynamicPrice(item.creditsCost, userId, companionId);
       return {
         ...item,
-        creditsCost: finalPrice,
-        baseCreditsCost: item.creditsCost,
-        flashSaleActive: flash.active,
-        flashDiscountPct: flash.discountPct,
+        creditsCost:       Number(finalPrice)          || item.creditsCost,
+        baseCreditsCost:   Number(item.creditsCost)    || 0,
+        affinityGain:      Number(item.affinityGain)   || 0,
+        flashSaleActive:   flash.active                ?? false,
+        flashDiscountPct:  Number(flash.discountPct)   || 0,
+        priorityMultiplier: 1.0,
+        spendMultiplier:    1.0,
+        affinityDiscount:   0.0,
+        flashSaleApplied:   flash.active               ?? false,
       };
     })
   );

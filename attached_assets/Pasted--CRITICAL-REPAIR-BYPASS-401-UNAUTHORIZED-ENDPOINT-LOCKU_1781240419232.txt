@@ -1,0 +1,39 @@
+# 🚨 CRITICAL REPAIR: BYPASS 401 UNAUTHORIZED ENDPOINT LOCKUP IN DEV ENV
+
+Look at the dev tools log analysis (image_12.png). The frontend is caught in an infinite loading loop because calls to `/api/users/me` are failing immediately with a `401 (Unauthorized)` status code. 
+
+The application middleware is strictly validating Telegram `initData`. When loaded inside a standard browser view or Replit sandbox preview link instead of an active Telegram chat window, the app lacks proper validation hashes, resulting in a system lockout.
+
+Apply this immediate self-healing correction across your backend auth middleware layers:
+
+---
+
+### 🛠️ 1. REPAIR BACKEND AUTH MIDDLEWARE (`artifacts/api-server/src/middleware/telegram-auth.ts` or auth router)
+Locate your Telegram validation logic and modify it to allow a grace fallback if the origin request arrives from our development preview ecosystem or is missing a production validation header:
+
+```typescript
+// Look for your validation block and insert a development environment override:
+export async function telegramAuthMiddleware(req: any, res: any, next: any) {
+  const authHeader = req.headers.authorization || '';
+  const initData = authHeader.replace('Bearer ', '');
+
+  // DEV ENVIRONMENT BYPASS OVERRIDE (Fixes image_12.png loop)
+  const isReplitDev = req.headers.host?.includes('replit.app') || req.headers.host?.includes('replit.dev');
+  
+  if (!initData || initData === 'undefined' || initData === 'null') {
+    if (process.env.NODE_ENV !== 'production' || isReplitDev) {
+      console.warn("⚠️ [AUTH DEVIATION] Bypassing strict Telegram validation for Replit preview development environments.");
+      // Inject a secure mock user object so subsequent endpoints don't crash
+      req.user = {
+        id: "mock_dev_user_12345",
+        telegramId: "123456789",
+        username: "DevTester",
+        firstName: "Developer",
+        languageCode: "en"
+      };
+      return next();
+    }
+  }
+
+  // Your existing production cryptographic signature verification goes below...
+}

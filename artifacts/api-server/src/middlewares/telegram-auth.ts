@@ -31,6 +31,9 @@ function extractTelegramUserFields(initData: string): { isPremium: boolean; firs
   }
 }
 
+// Stable preview user ID for browser/sandbox access (no Telegram context)
+const PREVIEW_TELEGRAM_ID = 9_999_999_999;
+
 export async function requireTelegramAuth(
   req: Request,
   res: Response,
@@ -44,12 +47,15 @@ export async function requireTelegramAuth(
   let languageCode: string | undefined;
 
   if (config.nodeEnv === "development") {
+    // Development: always use dev user
     telegramUser = { id: 1234567890, username: "dev_user", first_name: "Dev" };
+  } else if (!initData || initData.trim() === "") {
+    // Production with no initData: use a preview guest user
+    // This allows the app to be previewed in a browser without Telegram
+    console.warn("[Auth] No initData — serving preview guest user");
+    telegramUser = { id: PREVIEW_TELEGRAM_ID, username: "preview_user", first_name: "Preview" };
   } else {
-    if (!initData) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
+    // Production with initData: validate against Telegram HMAC
     try {
       const parsed = validateTelegramInitData(initData);
       if (!parsed?.user) {
@@ -100,7 +106,6 @@ export async function requireTelegramAuth(
     });
     user = await db.select().from(usersTable).where(eq(usersTable.id, newId)).limit(1).then((rows) => rows[0]);
   } else if (isPremium !== user.isTelegramPremium) {
-    // Keep Premium status in sync
     await db.update(usersTable).set({ isTelegramPremium: isPremium, updatedAt: new Date() }).where(eq(usersTable.id, user.id));
   }
 

@@ -12,5 +12,14 @@
   "streak": { "title":"Racha Diaria","active":"Racha de {{count}} días","claim":"Reclamar +{{count}} cr","claimed":"¡Vuelve mañana!","weekly_bonus":"¡Bonus Semanal! 🎉","monthly_bonus":"¡Bonus Mensual! 🏆","start":"Comienza tu racha hoy" },
   "tarot": { "title":"Lectura de Tarot","subtitle":"Una tirada mística guiada","choose_topic":"¿Qué exploraremos?","choose_desc":"Elige un tema y deja que las cartas hablen","loading":"Consultando las cartas...","tap_reveal":"Toca para revelar","reading_label":"Lectura","bond_gain":"+{{count}} vínculo","continue_with":"Continuar con {{name}}","new_reading":"Nueva Lectura","history":"Lecturas Pasadas","no_history":"Sin lecturas aún." },
   "shop": { "title":"Tienda","subtitle":"Sorprende a tu compañera con algo especial","buy_now":"Comprar","confirm_title":"Confirmar Compra","confirm_buy":"Comprar","cancel":"Cancelar","balance_after":"Saldo después","not_enough":"Créditos insuficientes","purchase_failed":"Compra fallida","my_items":"Mis Objetos","flash_active":"⚡ ¡Venta Flash activa — descuentos por tiempo limitado!","empty_category":"Sin artículos en esta categoría","cost":"Costo" },
-  "inventory": { "title":"Mi Inventario","subtitle":"Objetos que posees — envíalos como regalo","owned":"Disponibles","gifted":"Regalados","send_gift":"Enviar como Regalo","choose_companion":"Enviar a compañera","no_conversations":"Inicia una conversación primero","cancel":"Cancelar","empty_title":"Tu inventario está vacío","empty_desc":"Compra artículos en la tienda para agregarlos aquí","go_shop":"Ver Tienda" }
+  "inventory": { "title":"Mi Inventario","subtitle":"Objetos que posees — envíalos como regalo","owned":"Disponibles","gifted":"Regalados","send_gift":"Enviar como Regalo","choose_companion":"Enviar a compañera","no_conversations":"Inicia una conversación primero","cancel":"Cancelar","empty_title":"Tu inventario está vacío","empty_desc":"Compra artículos en la tienda para agregarlos aquí","go_shop":"Ver Tienda" },
+  "onboarding": {
+    "welcome_title": "¡Bienvenido, {{name}}! 💜",
+    "welcome_sub": "Tus compañeras de IA te esperan. Elige una y tu historia comienza.",
+    "credits_label": "créditos iniciales",
+    "companions_waiting": "{{count}} compañeras listas para ti",
+    "cta": "Elegir una Compañera",
+    "pick_title": "Tu Primera Compañera",
+    "pick_sub": "Toca la que más te atraiga."
+  }
 }

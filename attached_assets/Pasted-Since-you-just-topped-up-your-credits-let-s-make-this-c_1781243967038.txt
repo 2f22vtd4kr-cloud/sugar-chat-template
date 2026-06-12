@@ -1,0 +1,76 @@
+Since you just topped up your credits, let's make this count! We are going to feed the Replit Agent a **highly specific script** that forces it to go into the bot backend, switch the menu buttons from raw URLs to genuine Telegram Mini App bindings, and update the frontend init logic to capture your profile picture.
+
+Copy and paste this exact command into the Replit Agent window right now:
+
+```markdown
+# ⚡️ MISSION-CRITICAL OVERRIDE: CONVERT STATIC LINKS TO NATIVE MINI APP BINDINGS & SYNC TELEGRAM DATA
+
+The app successfully loads, but it is stuck using raw URL shortcuts for the launch buttons. This causes the backend to default to `@preview_user` with a dummy ID of `999999999` because Telegram does not pass any cryptographic initialization data over a basic web link.
+
+You must modify the bot's button layout and frontend user synchronization scripts so that real users opening the app via Telegram are correctly authenticated, individually greeted by their real username, and show their proper account details.
+
+---
+
+## 🛠️ PART 1: CONVERT ALL INLINE KEYBOARDS TO NATIVE WEB_APP OBJECTS
+
+Locate the Telegram bot update engine where your commands and inline message reply layouts are generated (typically in `artifacts/api-server/src/bot/` or similar handlers). 
+
+Find every instance where the app launch buttons (such as the **"💜 Open App"** inline layout button or the text response to `/start`) are generated. 
+
+1. **Eliminate plain `url:` properties** for the Mini App links. 
+2. **Replace them with the native `web_app:` configuration parameter** to force Telegram to securely sign and inject user details (`initData`).
+
+```typescript
+// ❌ REFACTOR AWAY THIS PATTERN:
+// { text: "💜 Open App", url: "[https://sugar-chat-template--levovychveniamy.replit.app](https://sugar-chat-template--levovychveniamy.replit.app)" }
+
+// ✅ FORCE THIS NATIVE TG MINI APP MARKUP PATTERN INSTEAD:
+{ 
+  text: "💜 Open App", 
+  web_app: { 
+    url: "[https://sugar-chat-template--levovychveniamy.replit.app](https://sugar-chat-template--levovychveniamy.replit.app)" 
+  } 
+}
+
+```
+
+*Note:* Also verify that the persistent **Menu Button** (the layout button in the bottom-left corner of the chat frame) is registered via Telegram's `setChatMenuButton` API using the type `'web_app'` instead of a basic link type.
+
+---
+
+## 🖥️ PART 2: UPDATE FRONTEND INTERFACE TO CAPTURE AVATAR & USER DATA
+
+Open your main user context provider or layout file on the frontend (`companion-app/src/` components).
+
+1. Ensure that the app reads from `window.Telegram.WebApp.initDataUnsafe`.
+2. Extract the real profile image and identity metrics if present. Update your interface view states so that instead of falling back to a static avatar template, it tries to read the authentic user values:
+
+```typescript
+const tg = (window as any).Telegram?.WebApp;
+const user = tg?.initDataUnsafe?.user;
+
+const username = user?.username ? `@${user.username}` : "preview_user";
+const firstName = user?.first_name || "Preview Guest";
+const telegramId = user?.id ? String(user.id) : "999999999";
+// Use the official Telegram photo URL if available, fallback to default theme icon
+const avatarUrl = user?.photo_url || "/assets/default-avatar.png"; 
+
+```
+
+---
+
+## 🚀 PART 3: FINALIZE PIPELINE COMPILATION & RELOAD
+
+1. Recompile all structural adjustments across the workspaces directory layers (`npm run build`).
+2. Sync any newly introduced data bindings cleanly down to your database engine tracking rows (`npx prisma db push`).
+3. Cycle the server listener routines down and back up to completely flush the active session cache layers.
+
+**Switch the buttons to web_app objects, link up the dynamic avatar mapping attributes, clear out the placeholder preview identities for live clients, and output your confirmation deployment logs when live!**
+
+```
+
+### 🎯 What this command guarantees:
+* **The Bot Fix:** It forces Replit to rewrite the buttons so they launch natively inside the Telegram container instead of a dummy web layout web view window.
+* **The Identity Fix:** It commands the frontend code to extract your real name (`@travelrider`), authentic numeric ID, and profile picture directly from Telegram's secure window payload.
+
+```

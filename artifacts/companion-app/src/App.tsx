@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, useState, type ErrorInfo, type ReactNode } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { TelegramProvider } from "@/context/TelegramContext";
 import { NsfwModal } from "@/components/NsfwModal";
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Companions from "@/pages/Companions";
@@ -19,6 +18,7 @@ import TarotPage from "@/pages/Tarot";
 import ShopPage from "@/pages/Shop";
 import InventoryPage from "@/pages/Inventory";
 import AdminPage from "@/pages/Admin";
+import Onboarding from "@/pages/Onboarding";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -108,6 +108,31 @@ function NsfwGate({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+// ── Onboarding Gate ──────────────────────────────────────────────────────────
+function OnboardingGate({ children }: { children: ReactNode }) {
+  const { data: user } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
+
+  const storageKey = user?.telegramId ? `sugar_onboarded_${user.telegramId}` : null;
+  const alreadyOnboarded = storageKey ? localStorage.getItem(storageKey) === "1" : true;
+
+  const [done, setDone] = useState(alreadyOnboarded);
+
+  if (!done && user) {
+    return (
+      <Onboarding
+        firstName={user.firstName ?? "there"}
+        credits={user.credits}
+        onComplete={() => {
+          if (storageKey) localStorage.setItem(storageKey, "1");
+          setDone(true);
+        }}
+      />
+    );
+  }
+
+  return <>{children}</>;
+}
+
 // ── Router ────────────────────────────────────────────────────────────────────
 function Router() {
   return (
@@ -140,11 +165,13 @@ function App() {
         <TooltipProvider>
           <TelegramProvider>
             <NsfwGate>
-              <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-                <AppErrorBoundary>
-                  <Router />
-                </AppErrorBoundary>
-              </WouterRouter>
+              <OnboardingGate>
+                <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+                  <AppErrorBoundary>
+                    <Router />
+                  </AppErrorBoundary>
+                </WouterRouter>
+              </OnboardingGate>
             </NsfwGate>
           </TelegramProvider>
           <Toaster />

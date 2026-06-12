@@ -7,11 +7,13 @@ interface TelegramUser {
   last_name?: string;
   language_code?: string;
   is_premium?: boolean;
+  photo_url?: string;
 }
 
 interface TelegramContextValue {
   initData: string;
   telegramUser: TelegramUser | null;
+  photoUrl: string | null;
   isPremium: boolean;
   isReady: boolean;
   adultConfirmed: boolean;
@@ -51,6 +53,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
   const [initData, setInitData] = useState("");
   const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [adultConfirmed, setAdultConfirmed] = useState(false);
 
   useEffect(() => {
@@ -61,15 +64,19 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
       tg.ready();
       tg.expand();
       data = tg.initData || "";
+
+      // photo_url is only in initDataUnsafe (not HMAC-signed but safe for display)
+      const unsafeUser = tg.initDataUnsafe?.user as TelegramUser | undefined;
+      if (unsafeUser?.photo_url) {
+        setPhotoUrl(unsafeUser.photo_url);
+      }
     }
 
-    // In dev mode fall back to empty string — backend accepts it in development
     _initData = data;
     setInitData(data);
 
     const user = parseTelegramUser(data);
     setTelegramUser(user);
-
     setIsReady(true);
   }, []);
 
@@ -90,7 +97,7 @@ export function TelegramProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <TelegramContext.Provider value={{ initData, telegramUser, isPremium, isReady, adultConfirmed, setAdultConfirmed, haptic }}>
+    <TelegramContext.Provider value={{ initData, telegramUser, photoUrl, isPremium, isReady, adultConfirmed, setAdultConfirmed, haptic }}>
       {children}
     </TelegramContext.Provider>
   );

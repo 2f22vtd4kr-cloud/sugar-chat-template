@@ -12,5 +12,14 @@
   "streak": { "title":"Tägliche Serie","active":"{{count}} Tage Serie","claim":"+{{count}} Kr. beanspruchen","claimed":"Komm morgen wieder!","weekly_bonus":"Wochenbonus! 🎉","monthly_bonus":"Monatsbonus! 🏆","start":"Starte deine Serie heute" },
   "tarot": { "title":"Tarot-Legung","subtitle":"Eine mystische begleitete Legung","choose_topic":"Was sollen wir erkunden?","choose_desc":"Wähle ein Thema und lass die Karten sprechen","loading":"Karten werden befragt...","tap_reveal":"Tippe zum Aufdecken","reading_label":"Deutung","bond_gain":"+{{count}} Bindung","continue_with":"Weiter mit {{name}}","new_reading":"Neue Legung","history":"Vergangene Legungen","no_history":"Noch keine Legungen." },
   "shop": { "title":"Shop","subtitle":"Überrasche deine Begleiterin mit etwas Besonderem","buy_now":"Kaufen","confirm_title":"Kauf bestätigen","confirm_buy":"Kaufen","cancel":"Abbrechen","balance_after":"Guthaben danach","not_enough":"Nicht genug Guthaben","purchase_failed":"Kauf fehlgeschlagen","my_items":"Meine Gegenstände","flash_active":"⚡ Flash-Sale aktiv — zeitlich begrenzte Rabatte!","empty_category":"Keine Artikel in dieser Kategorie","cost":"Kosten" },
-  "inventory": { "title":"Mein Inventar","subtitle":"Gegenstände — sende sie als Geschenk","owned":"Verfügbar","gifted":"Verschenkt","send_gift":"Als Geschenk senden","choose_companion":"An Begleiterin senden","no_conversations":"Starte zuerst ein Gespräch","cancel":"Abbrechen","empty_title":"Inventar ist leer","empty_desc":"Kaufe Gegenstände im Shop","go_shop":"Zum Shop" }
+  "inventory": { "title":"Mein Inventar","subtitle":"Gegenstände — sende sie als Geschenk","owned":"Verfügbar","gifted":"Verschenkt","send_gift":"Als Geschenk senden","choose_companion":"An Begleiterin senden","no_conversations":"Starte zuerst ein Gespräch","cancel":"Abbrechen","empty_title":"Inventar ist leer","empty_desc":"Kaufe Gegenstände im Shop","go_shop":"Zum Shop" },
+  "onboarding": {
+    "welcome_title": "Willkommen, {{name}}! 💜",
+    "welcome_sub": "Deine KI-Begleiterinnen warten auf dich. Wähle eine aus und deine Geschichte beginnt.",
+    "credits_label": "Startguthaben",
+    "companions_waiting": "{{count}} Begleiterinnen warten auf dich",
+    "cta": "Begleiterin wählen",
+    "pick_title": "Deine erste Begleiterin",
+    "pick_sub": "Tippe auf diejenige, die dich anzieht."
+  }
 }

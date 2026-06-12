@@ -68,6 +68,15 @@
     "empty_category": "No items in this category",
     "cost": "Cost"
   },
+  "onboarding": {
+    "welcome_title": "Welcome, {{name}}! 💜",
+    "welcome_sub": "Your AI companions are waiting to connect with you. Choose one and your story begins.",
+    "credits_label": "starting credits",
+    "companions_waiting": "{{count}} companions ready for you",
+    "cta": "Choose a Companion",
+    "pick_title": "Your First Companion",
+    "pick_sub": "Tap the one you feel drawn to."
+  },
   "inventory": {
     "title": "My Inventory",
     "subtitle": "Items you own — send them as gifts",

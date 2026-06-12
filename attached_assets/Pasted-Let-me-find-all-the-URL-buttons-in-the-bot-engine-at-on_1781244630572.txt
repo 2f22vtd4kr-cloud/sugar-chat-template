@@ -1,0 +1,54 @@
+Let me find all the URL buttons in the bot engine at once:
+
+
+3 actions
+Good — the bot already uses Markup.button.webApp() on the main buttons. Let me read the config and auth middleware to understand the real problem: the @preview_user / 999999999 fallback.
+
+
+4 actions
+Let me read the full bot around the start command and check all button patterns, plus check what's still requiring Redis in config:
+
+
+3 actions
+Now I can see everything. The real issue is threefold:
+
+config.ts still required("REDIS_URL") — crashes the deployed server since we removed Redis
+Telegram WebApp SDK script — need to verify it's in index.html; without it window.Telegram.WebApp is undefined, initData is empty, auth falls back to preview_user
+Bot still has a few plain url: buttons scattered in callbacks/energy/affiliate commands
+Let me check these simultaneously:
+
+
+3 actions
+Found both root causes:
+
+index.html is missing the Telegram WebApp SDK — <script src="https://telegram.org/js/telegram-web-app.js"> is not there. Without it, window.Telegram.WebApp is undefined, initData is always "", auth falls back to preview_user every time.
+
+config.ts still required("REDIS_URL") — crashes the deployed server since we removed Redis.
+
+Fixing both now:
+
+
+3 actions
+Now rebuild the API server (config changed) and restart both workflows simultaneously:
+
+
+6 actions
+Both services running perfectly clean — zero errors. Here's what was done and why it fixes real user identification:
+
+What was broken & what was fixed
+Fix 1 — Telegram WebApp SDK missing from index.html (the critical one)
+The <script src="https://telegram.org/js/telegram-web-app.js"> tag was never in the HTML <head>. Without it:
+
+window.Telegram.WebApp is undefined
+TelegramContext reads tg.initData → gets "" (empty)
+The x-telegram-init-data header is never sent
+The auth middleware sees no initData → falls back to preview_user / 999999999
+Now: The SDK loads before your React app. When a real user opens the Mini App via the bot's web_app button, Telegram injects their signed initData, the header gets sent on every fetch, and the auth middleware validates the HMAC and reads their real Telegram ID, username, and premium status.
+
+Fix 2 — REDIS_URL was still a required env var
+Even though we removed all BullMQ code, config.ts still called required("REDIS_URL") — this would throw Missing required environment variable: REDIS_URL and crash the deployed server on every cold start. Removed.
+
+Fix 3 — Bot buttons confirmed ✅
+All bot buttons already use Markup.button.webApp() which generates the correct { web_app: { url } } Telegram API payload — no plain url: properties needed changing.
+
+Redeploy now to push both changes to production — the SDK script is the main one your users will feel instantly.

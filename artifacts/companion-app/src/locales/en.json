@@ -37,7 +37,30 @@
     "claimed": "Come back tomorrow!",
     "weekly_bonus": "Weekly Bonus! 🎉",
     "monthly_bonus": "Monthly Bonus! 🏆",
-    "start": "Start your streak today"
+    "start": "Start your streak today",
+    "modal_title": "Daily Check-In",
+    "day_n": "Day {{n}}",
+    "next_milestone": "Next milestone",
+    "days_left": "{{count}} days away",
+    "milestone_reward": "+{{credits}} cr bonus",
+    "not_now": "Not now",
+    "already_claimed": "Come back tomorrow ✓",
+    "claimed_success": "+{{count}} credits added! 🎉",
+    "progress_title": "Streak Progress",
+    "this_week": "This week",
+    "days_unit": "days",
+    "days_away": "days away",
+    "milestones": "Milestones"
+  },
+  "surprise": {
+    "title_milestone": "🔥 Day {{days}} Streak!",
+    "title_reset": "Welcome Back! 💜",
+    "title_default": "Special Offer! ✨",
+    "sub_milestone": "Keep it going — grab extra credits to fuel your journey.",
+    "sub_reset": "You're back! Recharge your credits and restart your streak.",
+    "sub_default": "A limited-time deal just for you.",
+    "cta": "Get Credits Now",
+    "dismiss": "Maybe Later"
   },
   "tarot": {
     "title": "Tarot Reading",

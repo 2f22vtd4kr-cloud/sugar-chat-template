@@ -1,7 +1,9 @@
 import { useGetMe, getGetMeQueryKey, useGetDashboardSummary, getGetDashboardSummaryQueryKey } from "@workspace/api-client-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { StreakBanner } from "@/components/StreakBanner";
-import { motion } from "framer-motion";
+import { StreakClaimModal } from "@/components/StreakClaimModal";
+import { SurpriseOfferModal } from "@/components/SurpriseOfferModal";
+import { motion, AnimatePresence } from "framer-motion";
 import { Coins, Heart, MessageCircle, Sparkles, Crown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useTelegram } from "@/context/TelegramContext";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 
 interface BonusSummary {
   hasPremiumAccess: boolean;
@@ -19,6 +22,18 @@ interface BonusSummary {
   dailyImageCredits: number;
   badgeLabel: string;
 }
+
+interface StreakData {
+  streakDays: number;
+  canClaimToday: boolean;
+  isWeeklyBonus: boolean;
+  isMonthlyBonus: boolean;
+}
+
+type ModalState =
+  | { type: "none" }
+  | { type: "streak" }
+  | { type: "surprise"; trigger: "streak_milestone" | "streak_reset"; streakDays: number };
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -30,12 +45,77 @@ export default function Dashboard() {
     queryKey: ["users", "bonuses"],
     queryFn: () => fetch(`${import.meta.env.BASE_URL}api/users/me/bonuses`).then((r) => r.json()),
   });
+  const { data: streak } = useQuery<StreakData>({
+    queryKey: ["streak"],
+    queryFn: () => fetch(`${import.meta.env.BASE_URL}api/users/me/streak`).then((r) => r.json()),
+    staleTime: 60_000,
+  });
+
+  const [modal, setModal] = useState<ModalState>({ type: "none" });
+
+  // Auto-show streak modal once per session when claim is available
+  useEffect(() => {
+    if (!streak?.canClaimToday) return;
+    const key = "streak_modal_shown";
+    const today = new Date().toISOString().split("T")[0];
+    if (sessionStorage.getItem(key) === today) return;
+    sessionStorage.setItem(key, today);
+    const timer = setTimeout(() => setModal({ type: "streak" }), 800);
+    return () => clearTimeout(timer);
+  }, [streak?.canClaimToday]);
+
+  const handleStreakClaimed = (data: {
+    rewardCredits: number;
+    streakDays: number;
+    isWeeklyBonus: boolean;
+    isMonthlyBonus: boolean;
+    milestoneGift: { itemName: string; emoji: string } | null;
+    streakReset: boolean;
+  }) => {
+    setModal({ type: "none" });
+    // After a weekly milestone, show upsell offer (with some delay)
+    const shouldShowOffer = data.isWeeklyBonus || data.streakReset;
+    if (shouldShowOffer) {
+      const offerKey = "last_surprise_offer";
+      const now = Date.now();
+      const last = parseInt(localStorage.getItem(offerKey) ?? "0", 10);
+      if (now - last > 48 * 3600 * 1000) {
+        localStorage.setItem(offerKey, String(now));
+        setTimeout(() => {
+          setModal({
+            type: "surprise",
+            trigger: data.streakReset ? "streak_reset" : "streak_milestone",
+            streakDays: data.streakDays,
+          });
+        }, 600);
+      }
+    }
+  };
 
   const isLoading = userLoading || summaryLoading;
   const displayName = user?.username ? `@${user.username}` : user?.firstName ?? "";
 
   return (
     <AppLayout>
+      {/* Modals */}
+      <AnimatePresence>
+        {modal.type === "streak" && (
+          <StreakClaimModal
+            key="streak-modal"
+            onClose={() => setModal({ type: "none" })}
+            onClaimed={handleStreakClaimed}
+          />
+        )}
+        {modal.type === "surprise" && (
+          <SurpriseOfferModal
+            key="surprise-modal"
+            trigger={modal.trigger}
+            streakDays={modal.streakDays}
+            onClose={() => setModal({ type: "none" })}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="p-4 pt-8 space-y-5 pb-8">
         {/* Header */}
         <header className="space-y-1.5">
@@ -65,8 +145,10 @@ export default function Dashboard() {
           </motion.p>
         </header>
 
-        {/* Daily streak banner */}
-        <StreakBanner />
+        {/* Daily streak banner — tap to open the full modal */}
+        <div onClick={() => streak?.canClaimToday && setModal({ type: "streak" })} className={streak?.canClaimToday ? "cursor-pointer" : ""}>
+          <StreakBanner />
+        </div>
 
         {bonuses && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>

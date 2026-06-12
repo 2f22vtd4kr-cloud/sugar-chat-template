@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useTelegram } from "@/context/TelegramContext";
 import { SUPPORTED_LANGUAGES } from "@/i18n";
 import { User, Globe, Sparkles, Shield, ExternalLink, Moon } from "lucide-react";
+import { StreakProgressCard } from "@/components/StreakProgressCard";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -141,6 +142,9 @@ export default function Settings() {
             </Card>
           </motion.div>
         )}
+
+        {/* Streak progress */}
+        <StreakProgressCard />
 
         {/* Language selector */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>

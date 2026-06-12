@@ -1,36 +1,92 @@
 import { Router } from "express";
 import { requireTelegramAuth } from "../middlewares/telegram-auth.js";
-import { db, usersTable, messagesTable, conversationsTable, companionsTable, ledgerEntriesTable, subscriptionsTable } from "@workspace/db";
+import { db, usersTable, messagesTable, conversationsTable, companionsTable, ledgerEntriesTable, subscriptionsTable, shopInventoryTable } from "@workspace/db";
 import { eq, sum, count, and, gte } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 const router = Router();
 
+// ── Streak reward schedule (7-day cycle) ─────────────────────────────────────
+// Conservative rewards — profitable for a business, engaging for users
+const WEEK_CYCLE_CREDITS = [3, 4, 5, 3, 3, 4, 10]; // index 6 = weekly bonus day
+
+function streakRewardCredits(streakDays: number): number {
+  if (streakDays > 0 && streakDays % 30 === 0) return 15;  // monthly bonus
+  const posInCycle = (streakDays - 1) % 7;                  // 0-indexed
+  return WEEK_CYCLE_CREDITS[posInCycle] ?? 3;
+}
+
+interface MilestoneInfo {
+  targetDays: number;
+  daysLeft: number;
+  creditsBonus: number;
+  label: string;
+  hasGift: boolean;
+  emoji: string;
+}
+
+const MILESTONES: Array<{ days: number; label: string; bonus: number; hasGift: boolean; emoji: string }> = [
+  { days: 7,   label: "Week 1",      bonus: 10, hasGift: true,  emoji: "🌹" },
+  { days: 14,  label: "Week 2",      bonus: 12, hasGift: true,  emoji: "💍" },
+  { days: 21,  label: "Week 3",      bonus: 12, hasGift: false, emoji: "⭐" },
+  { days: 30,  label: "Month 1",     bonus: 15, hasGift: true,  emoji: "💎" },
+  { days: 60,  label: "Month 2",     bonus: 20, hasGift: false, emoji: "🔥" },
+  { days: 90,  label: "3-Month VIP", bonus: 25, hasGift: true,  emoji: "👑" },
+];
+
+const MILESTONE_GIFTS: Record<number, { itemId: string; itemName: string; emoji: string }> = {
+  7:  { itemId: "streak-rose",     itemName: "Streak Rose",     emoji: "🌹" },
+  14: { itemId: "streak-bracelet", itemName: "Streak Bracelet", emoji: "💍" },
+  30: { itemId: "streak-diamond",  itemName: "Streak Diamond",  emoji: "💎" },
+  90: { itemId: "streak-crown",    itemName: "VIP Crown",       emoji: "👑" },
+};
+
+function getNextMilestone(streakDays: number): MilestoneInfo | null {
+  const next = MILESTONES.find(m => m.days > streakDays);
+  if (!next) return null;
+  return {
+    targetDays:   next.days,
+    daysLeft:     next.days - streakDays,
+    creditsBonus: next.bonus,
+    label:        next.label,
+    hasGift:      next.hasGift,
+    emoji:        next.emoji,
+  };
+}
+
+function getWeekSchedule(streakDays: number, canClaimToday: boolean) {
+  const posInCycle = streakDays % 7; // how many days claimed in current cycle
+  return WEEK_CYCLE_CREDITS.map((credits, i) => ({
+    dayOffset:  i + 1,
+    credits,
+    isBonusDay: i === 6,
+    claimed:    i < posInCycle,
+    isToday:    canClaimToday && i === posInCycle,
+  }));
+}
+
+// ── Serializers ───────────────────────────────────────────────────────────────
 function serializeUser(user: typeof usersTable.$inferSelect) {
   return {
-    id: user.id,
-    telegramId: user.telegramId.toString(),
-    username: user.username,
-    firstName: user.firstName,
-    credits: user.credits,
-    freeImagesSent: user.freeImagesSent,
-    language: user.language,
-    adultConfirmed: user.adultConfirmed,
-    isTelegramPremium: user.isTelegramPremium,
-    streakDays: user.streakDays,
-    createdAt: user.createdAt.toISOString(),
+    id:               user.id,
+    telegramId:       user.telegramId.toString(),
+    username:         user.username,
+    firstName:        user.firstName,
+    credits:          user.credits,
+    freeImagesSent:   user.freeImagesSent,
+    language:         user.language,
+    adultConfirmed:   user.adultConfirmed,
+    isTelegramPremium:user.isTelegramPremium,
+    streakDays:       user.streakDays,
+    createdAt:        user.createdAt.toISOString(),
   };
 }
 
 function todayDateString() {
-  return new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+  return new Date().toISOString().split("T")[0];
 }
 
-function streakRewardCredits(streakDays: number): number {
-  if (streakDays % 30 === 0) return 25;
-  if (streakDays % 7 === 0) return 10;
-  return 3;
-}
+// ── Routes ────────────────────────────────────────────────────────────────────
 
 // GET /api/users/me
 router.get("/me", requireTelegramAuth, async (req, res) => {
@@ -60,43 +116,20 @@ router.get("/me/bonuses", requireTelegramAuth, async (req, res) => {
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
   const activeSubscription = await db
-    .select()
-    .from(subscriptionsTable)
-    .where(
-      and(
-        eq(subscriptionsTable.userId, userId),
-        eq(subscriptionsTable.status, "active"),
-        gte(subscriptionsTable.expiresAt, new Date())
-      )
-    )
-    .orderBy(subscriptionsTable.expiresAt)
-    .limit(1)
-    .then((rows) => rows[0] ?? null);
+    .select().from(subscriptionsTable)
+    .where(and(eq(subscriptionsTable.userId, userId), eq(subscriptionsTable.status, "active"), gte(subscriptionsTable.expiresAt, new Date())))
+    .orderBy(subscriptionsTable.expiresAt).limit(1).then((rows) => rows[0] ?? null);
 
   const hasPremiumAccess = user.isTelegramPremium || activeSubscription !== null;
   const perks = hasPremiumAccess
-    ? {
-        extraEnergyPerDay: 3,
-        priorityMultiplier: 1.25,
-        dailyImageCredits: 1,
-        badgeLabel: activeSubscription ? "VIP Subscriber" : "Telegram Premium",
-      }
-    : {
-        extraEnergyPerDay: 0,
-        priorityMultiplier: 1,
-        dailyImageCredits: 0,
-        badgeLabel: "Standard",
-      };
+    ? { extraEnergyPerDay: 3, priorityMultiplier: 1.25, dailyImageCredits: 1, badgeLabel: activeSubscription ? "VIP Subscriber" : "Telegram Premium" }
+    : { extraEnergyPerDay: 0, priorityMultiplier: 1, dailyImageCredits: 0, badgeLabel: "Standard" };
 
   res.json({
     hasPremiumAccess,
     isTelegramPremium: user.isTelegramPremium,
     activeSubscription: activeSubscription
-      ? {
-          id: activeSubscription.id,
-          planId: activeSubscription.planId,
-          expiresAt: activeSubscription.expiresAt.toISOString(),
-        }
+      ? { id: activeSubscription.id, planId: activeSubscription.planId, expiresAt: activeSubscription.expiresAt.toISOString() }
       : null,
     ...perks,
   });
@@ -111,14 +144,25 @@ router.get("/me/streak", requireTelegramAuth, async (req, res) => {
   const canClaimToday = user.lastLoginDate !== today;
   const nextStreakDays = canClaimToday ? user.streakDays + 1 : user.streakDays;
   const nextRewardCredits = streakRewardCredits(nextStreakDays);
+  const nextMilestone = getNextMilestone(canClaimToday ? user.streakDays : nextStreakDays);
 
   res.json({
-    streakDays: user.streakDays,
-    lastLoginDate: user.lastLoginDate,
+    streakDays:        user.streakDays,
+    lastLoginDate:     user.lastLoginDate,
     canClaimToday,
     nextRewardCredits,
-    isWeeklyBonus: nextStreakDays % 7 === 0,
-    isMonthlyBonus: nextStreakDays % 30 === 0,
+    isWeeklyBonus:     nextStreakDays % 7 === 0 && nextStreakDays > 0,
+    isMonthlyBonus:    nextStreakDays % 30 === 0 && nextStreakDays > 0,
+    weekSchedule:      getWeekSchedule(user.streakDays, canClaimToday),
+    nextMilestone,
+    allMilestones:     MILESTONES.map(m => ({
+      days:      m.days,
+      label:     m.label,
+      bonus:     m.bonus,
+      hasGift:   m.hasGift,
+      emoji:     m.emoji,
+      achieved:  user.streakDays >= m.days,
+    })),
   });
 });
 
@@ -133,35 +177,56 @@ router.post("/me/streak/claim", requireTelegramAuth, async (req, res) => {
     return;
   }
 
-  // If last login was yesterday, continue streak; otherwise reset to 1
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayStr = yesterday.toISOString().split("T")[0];
   const newStreakDays = user.lastLoginDate === yesterdayStr ? user.streakDays + 1 : 1;
   const rewardCredits = streakRewardCredits(newStreakDays);
+  const isWeeklyBonus  = newStreakDays % 7 === 0;
+  const isMonthlyBonus = newStreakDays % 30 === 0;
+  const streakReset    = user.lastLoginDate !== null && user.lastLoginDate !== yesterdayStr && user.streakDays > 0;
 
   await db.update(usersTable).set({
-    streakDays: newStreakDays,
+    streakDays:    newStreakDays,
     lastLoginDate: today,
-    credits: user.credits + rewardCredits,
-    updatedAt: new Date(),
+    credits:       user.credits + rewardCredits,
+    updatedAt:     new Date(),
   }).where(eq(usersTable.id, req.dbUserId!));
 
   await db.insert(ledgerEntriesTable).values({
-    id: randomUUID(),
-    userId: req.dbUserId!,
-    amount: rewardCredits,
-    type: "STREAK_REWARD",
+    id:          randomUUID(),
+    userId:      req.dbUserId!,
+    amount:      rewardCredits,
+    type:        "STREAK_REWARD",
     referenceId: `streak-${req.dbUserId!}-${today}`,
     description: `Day ${newStreakDays} streak reward — +${rewardCredits} credits`,
   });
 
+  // Grant milestone gift if applicable
+  let milestoneGift: { itemName: string; emoji: string } | null = null;
+  const gift = MILESTONE_GIFTS[newStreakDays];
+  if (gift) {
+    await db.insert(shopInventoryTable).values({
+      id:        randomUUID(),
+      userId:    req.dbUserId!,
+      itemId:    gift.itemId,
+      itemName:  `${gift.emoji} ${gift.itemName}`,
+      creditsCost: 0,
+      isGifted:  false,
+    });
+    milestoneGift = { itemName: gift.itemName, emoji: gift.emoji };
+  }
+
   res.json({
-    streakDays: newStreakDays,
+    streakDays:       newStreakDays,
     rewardCredits,
     newCreditBalance: user.credits + rewardCredits,
-    isWeeklyBonus: newStreakDays % 7 === 0,
-    isMonthlyBonus: newStreakDays % 30 === 0,
+    isWeeklyBonus,
+    isMonthlyBonus,
+    milestoneGift,
+    streakReset,
+    weekSchedule:     getWeekSchedule(newStreakDays, false),
+    nextMilestone:    getNextMilestone(newStreakDays),
   });
 });
 

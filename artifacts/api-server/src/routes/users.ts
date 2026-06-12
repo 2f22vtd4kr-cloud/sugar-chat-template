@@ -141,19 +141,37 @@ router.get("/me/streak", requireTelegramAuth, async (req, res) => {
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
   const today = todayDateString();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0];
+
   const canClaimToday = user.lastLoginDate !== today;
-  const nextStreakDays = canClaimToday ? user.streakDays + 1 : user.streakDays;
+
+  // Detect whether the streak is continuing or broken (would reset to 1)
+  const streakIsBroken = canClaimToday
+    && user.lastLoginDate !== null
+    && user.lastLoginDate !== yesterdayStr;
+
+  // Projected days after claim — reset to 1 if broken, increment if continuing
+  const nextStreakDays = canClaimToday
+    ? (streakIsBroken ? 1 : user.streakDays + 1)
+    : user.streakDays;
+
   const nextRewardCredits = streakRewardCredits(nextStreakDays);
-  const nextMilestone = getNextMilestone(canClaimToday ? user.streakDays : nextStreakDays);
+  const nextMilestone = getNextMilestone(nextStreakDays);
+
+  // Show week schedule as it will look AFTER claiming
+  const scheduleBase = streakIsBroken ? 0 : user.streakDays;
 
   res.json({
     streakDays:        user.streakDays,
     lastLoginDate:     user.lastLoginDate,
     canClaimToday,
+    streakWillReset:   streakIsBroken,
     nextRewardCredits,
     isWeeklyBonus:     nextStreakDays % 7 === 0 && nextStreakDays > 0,
     isMonthlyBonus:    nextStreakDays % 30 === 0 && nextStreakDays > 0,
-    weekSchedule:      getWeekSchedule(user.streakDays, canClaimToday),
+    weekSchedule:      getWeekSchedule(scheduleBase, canClaimToday),
     nextMilestone,
     allMilestones:     MILESTONES.map(m => ({
       days:      m.days,

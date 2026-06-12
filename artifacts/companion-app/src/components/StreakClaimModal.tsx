@@ -28,6 +28,7 @@ interface StreakData {
   streakDays: number;
   lastLoginDate: string | null;
   canClaimToday: boolean;
+  streakWillReset: boolean;
   nextRewardCredits: number;
   isWeeklyBonus: boolean;
   isMonthlyBonus: boolean;
@@ -80,7 +81,10 @@ export function StreakClaimModal({ onClose, onClaimed }: StreakClaimModalProps) 
 
   const schedule = streak.weekSchedule ?? [];
   const isSpecial = streak.isWeeklyBonus || streak.isMonthlyBonus;
-  const displayStreakDays = streak.streakDays + (streak.canClaimToday ? 1 : 0);
+  const wasReset = streak.streakWillReset && streak.streakDays > 0;
+  const displayStreakDays = streak.canClaimToday
+    ? (streak.streakWillReset ? 1 : streak.streakDays + 1)
+    : streak.streakDays;
 
   return (
     <motion.div
@@ -133,6 +137,21 @@ export function StreakClaimModal({ onClose, onClaimed }: StreakClaimModalProps) 
                 : t("streak.start")}
             </p>
           </div>
+
+          {/* Streak reset notice */}
+          {wasReset && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl"
+              style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)" }}
+            >
+              <span className="text-base flex-shrink-0">💔</span>
+              <p className="text-[11px] text-yellow-300/80 leading-snug">
+                {t("streak.broken_reset", { count: streak.streakDays })}
+              </p>
+            </motion.div>
+          )}
 
           {/* 7-day schedule track */}
           <div className="relative">

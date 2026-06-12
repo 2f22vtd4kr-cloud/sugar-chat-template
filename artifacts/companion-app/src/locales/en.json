@@ -50,7 +50,8 @@
     "this_week": "This week",
     "days_unit": "days",
     "days_away": "days away",
-    "milestones": "Milestones"
+    "milestones": "Milestones",
+    "broken_reset": "Your {{count}}-day streak was broken. Starting fresh from Day 1! 🔄"
   },
   "surprise": {
     "title_milestone": "🔥 Day {{days}} Streak!",

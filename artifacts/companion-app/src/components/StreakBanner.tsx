@@ -11,6 +11,7 @@ interface StreakData {
   streakDays: number;
   lastLoginDate: string | null;
   canClaimToday: boolean;
+  streakWillReset: boolean;
   nextRewardCredits: number;
   isWeeklyBonus: boolean;
   isMonthlyBonus: boolean;
@@ -55,7 +56,9 @@ export function StreakBanner() {
   };
 
   const isSpecial = streak.isWeeklyBonus || streak.isMonthlyBonus;
-  const displayDays = streak.streakDays + (streak.canClaimToday ? 1 : 0);
+  const displayDays = streak.canClaimToday
+    ? (streak.streakWillReset ? 1 : streak.streakDays + 1)
+    : streak.streakDays;
 
   return (
     <motion.div
